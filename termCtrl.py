@@ -14,9 +14,9 @@ def create(parent):
  wxID_TERMWINTERMWINTOOLBAR, 
 ] = [wx.NewId() for _init_ctrls in range(6)]
 
-[wxID_TERMWINTERMWINTOOLBARCOMMANDLIST, wxID_TERMWINTERMWINTOOLBARSELECTFONT, 
- wxID_TERMWINTERMWINTOOLBARTOOLS2, 
-] = [wx.NewId() for _init_coll_termWinToolBar_Tools in range(3)]
+[wxID_TERMWINTERMWINTOOLBARCOMMANDLIST, wxID_TERMWINTERMWINTOOLBAROPENLOG, 
+ wxID_TERMWINTERMWINTOOLBARSELECTFONT, wxID_TERMWINTERMWINTOOLBARTOOLS2, 
+] = [wx.NewId() for _init_coll_termWinToolBar_Tools in range(4)]
 
 #Images are get from http://www.iconarchive.com/show/glaze-icons-by-mart/font-bitmap-icon.html
 
@@ -32,16 +32,22 @@ class termWin(wx.Frame):
               wx.BITMAP_TYPE_PNG), bmpDisabled=wx.NullBitmap,
               id=wxID_TERMWINTERMWINTOOLBARSELECTFONT, kind=wx.ITEM_NORMAL,
               label='', longHelp='', shortHelp=u'Select Font')
-        parent.DoAddTool(bitmap=wx.Bitmap(u'gf-16x16.png',
+        parent.DoAddTool(bitmap=wx.Bitmap(u'gf-16x16.png', wx.BITMAP_TYPE_PNG),
+              bmpDisabled=wx.NullBitmap, id=wxID_TERMWINTERMWINTOOLBARTOOLS2,
+              kind=wx.ITEM_CHECK, label=u'debug', longHelp='',
+              shortHelp=u'enableDebug')
+        parent.DoAddTool(bitmap=wx.Bitmap(u'log-16x16.png',
               wx.BITMAP_TYPE_PNG), bmpDisabled=wx.NullBitmap,
-              id=wxID_TERMWINTERMWINTOOLBARTOOLS2, kind=wx.ITEM_NORMAL,
-              label=u'debug', longHelp='', shortHelp=u'enableDebug')
+              id=wxID_TERMWINTERMWINTOOLBAROPENLOG, kind=wx.ITEM_NORMAL,
+              label=u'openLogFile', longHelp='', shortHelp=u'open log file')
         self.Bind(wx.EVT_TOOL, self.OnToolBar1Tools0Tool,
               id=wxID_TERMWINTERMWINTOOLBARCOMMANDLIST)
         self.Bind(wx.EVT_TOOL, self.OnTermWinToolBarSelectfontTool,
               id=wxID_TERMWINTERMWINTOOLBARSELECTFONT)
         self.Bind(wx.EVT_TOOL, self.OnTermWinToolBarTools2Tool,
               id=wxID_TERMWINTERMWINTOOLBARTOOLS2)
+        self.Bind(wx.EVT_TOOL, self.OnTermWinToolBarOpenlogTool,
+              id=wxID_TERMWINTERMWINTOOLBAROPENLOG)
 
         parent.Realize()
 
@@ -61,7 +67,7 @@ class termWin(wx.Frame):
 
         self.termWinSplitter = wx.SplitterWindow(id=wxID_TERMWINTERMWINSPLITTER,
               name=u'termWinSplitter', parent=self, pos=wx.Point(0, 0),
-              size=wx.Size(744, 516), style=wx.SP_3D)
+              size=wx.Size(744, 488), style=wx.SP_3D)
         self.termWinSplitter.SetConstraints(LayoutAnchors(self.termWinSplitter,
               True, True, True, True))
 
@@ -82,14 +88,14 @@ class termWin(wx.Frame):
         self.termWinHistList = wx.ListBox(choices=[],
               id=wxID_TERMWINTERMWINHISTLIST, name=u'termWinHistList',
               parent=self.termWinSplitter, pos=wx.Point(2, 357),
-              size=wx.Size(740, 157), style=0)
+              size=wx.Size(740, 129), style=0)
         self.termWinHistList.SetMinSize(wx.Size(-1, -1))
         self.termWinSplitter.SplitHorizontally(self.termWinContent,
               self.termWinHistList, 350)
 
         self.termWinCmdCombo = wx.ComboBox(choices=[],
               id=wxID_TERMWINTERMWINCMDCOMBO, name=u'termWinCmdCombo',
-              parent=self, pos=wx.Point(0, 517), size=wx.Size(747, 21), style=0,
+              parent=self, pos=wx.Point(0, 489), size=wx.Size(747, 21), style=0,
               value='')
         self.termWinCmdCombo.SetConstraints(LayoutAnchors(self.termWinCmdCombo,
               True, False, True, True))
@@ -405,3 +411,7 @@ class termWin(wx.Frame):
     def OnTermWinToolBarTools2Tool(self, event):
         self.adapter.switchDebug()
         #event.Skip()
+
+    def OnTermWinToolBarOpenlogTool(self, event):
+        self.adapter.openLogFile()
+        event.Skip()
