@@ -1,5 +1,6 @@
 from termCtrl import *
-
+from forwardServerManager import *
+from viewManager import *
 
 
 class multiConsoleManager:
@@ -13,6 +14,8 @@ class multiConsoleManager:
         #self.server.startSimpleServer(1234)
         global gM
         gM = self
+        self.vwMngr = viewManager(self.config)
+        self.fwdSvrMngr = forwardServerManager(self.vwMngr, self.config)
         
     def openSession(self, session):
         child = termWin(self.toolbox)
@@ -32,6 +35,9 @@ class multiConsoleManager:
         #print self.toolbox
         #print 'server:%s,port:%d'%(server,port)
         self.toolbox.createTempSession(server,port, triggers, timeoutHandler)
+    
+    def openFwdServer(self, session):
+        self.fwdSvrMngr.createForwardServer(session)
     
     def closeAll(self):
         for i in self.childs:
@@ -122,12 +128,13 @@ class startMultiConsoleCommandLineServer:
                  'Python': 'http://python.org'}
         site = server.Site(LinksPage(links))
         reactor.listenTCP(TERM_SERVER_PORT, site)
+        '''
         host = "zch66bld01"
         port = 22
         listen_port = 2345
         server_factory = ForwardServerFactory(host, port)
         reactor.listenTCP(listen_port, server_factory)
-        
+        '''
     def startXmlRpcServer(self):
         from twisted.internet import reactor
         r = mtelXmlRpcServer()

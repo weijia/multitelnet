@@ -1,13 +1,36 @@
 from twisted.internet.protocol import Protocol, ClientFactory, ServerFactory
 from twisted.internet import reactor
 import sys
+from telnetClient import *
 
-class ForwardServer(Protocol):
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
+
+class teeTransport:
+  def __init__(self, originalTransport, dupTransport):
+    self.originalTransport = originalTransport
+    self.dupTransport = dupTransport
+  def write(self, data):
+    self.originalTransport.write(data)
+    self.dupTransport.write(data)
+
+
+class viewTransport:
+  def __init__(self, viewTrans):
+    self.viewTrans = viewTrans
+  def write(self, data):
+    self.viewTrans.dataReceived(data)
+  def loseConnection(self):
+    pass
+
+class forwardServer(Protocol):
+    def __init__(self, session, fwdSrvMngr):
+        self.session = session
+        self.host = session['server']
+        self.port = session['port']
+        self.manager = fwdSrvMngr
         self.data = ""
+        self.view = self.manager.createView(session)
         self._connected = False
+        self.acceptedFlag = False
 
     def dataReceived(self, data):
         #print "Received %d bytes from client\n" % len(data)
@@ -19,6 +42,12 @@ class ForwardServer(Protocol):
             self.data = ""
 
     def connectionMade(self):
+        #We may only accept 1 client. More than 1 client is ignored
+        if self.acceptedFlag:
+          return
+        self.acceptedFlag = True
+        self.client = telnetForwardClient(self.view.adapter, self)
+        self.transport = teeTransport(self.transport, viewTransport(self.client))
         self.connector = reactor.connectTCP(self.host, self.port, ForwardClientFactory(self))
         print "Client connected"
 
@@ -39,6 +68,18 @@ class ForwardServer(Protocol):
         self._connected = False
         print "Client disonnected"
 
+
+
+class forwardServerFactory(ServerFactory):
+    def __init__(self, session, fwdSrvMngr):
+        self.session = session
+        self.manager = fwdSrvMngr
+
+    def buildProtocol(self, addr):
+        return forwardServer(self.session, self.manager)
+
+
+
 class ForwardClient(Protocol):
     def __init__(self, forward):
         self.forward = forward
@@ -55,13 +96,6 @@ class ForwardClient(Protocol):
         self.forward.setConnected(False)
         print "Disconnected from server"
 
-class ForwardServerFactory(ServerFactory):
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
-
-    def buildProtocol(self, addr):
-        return ForwardServer(self.host, self.port)
 
 class ForwardClientFactory(ClientFactory):
     def __init__(self, forward):
@@ -72,13 +106,3 @@ class ForwardClientFactory(ClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         self.forward.transport.loseConnection()
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print "USAGE: %s <host> <port> <listen port>" % sys.argv[0]
-        sys.exit(1)
-    host, port, listen_port = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
-    server_factory = ForwardServerFactory(host, port)
-    reactor.listenTCP(listen_port, server_factory)
-    reactor.run()

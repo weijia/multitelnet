@@ -18,12 +18,12 @@ def create(parent):
 [wxID_TOOLWINDOW, wxID_TOOLWINDOWCHECKBOX1, wxID_TOOLWINDOWCOMBOBOX1, 
  wxID_TOOLWINDOWCOMBOBOX2, wxID_TOOLWINDOWCOMBOBOX3, wxID_TOOLWINDOWCOMBOBOX4, 
  wxID_TOOLWINDOWCOMBOBOX5, wxID_TOOLWINDOWCONNECTBUT, 
- wxID_TOOLWINDOWDELBUTTON, wxID_TOOLWINDOWNOTEBOOK1, wxID_TOOLWINDOWPANEL1, 
- wxID_TOOLWINDOWPLAYBACK, wxID_TOOLWINDOWSSHCON, wxID_TOOLWINDOWSTATICTEXT1, 
- wxID_TOOLWINDOWSTATICTEXT2, wxID_TOOLWINDOWSTATICTEXT3, 
- wxID_TOOLWINDOWSTATICTEXT4, wxID_TOOLWINDOWSTATICTEXT5, 
- wxID_TOOLWINDOWTEXTCTRL1, 
-] = [wx.NewId() for _init_ctrls in range(19)]
+ wxID_TOOLWINDOWDELBUTTON, wxID_TOOLWINDOWFWDSERVER, wxID_TOOLWINDOWNOTEBOOK1, 
+ wxID_TOOLWINDOWPANEL1, wxID_TOOLWINDOWPLAYBACK, wxID_TOOLWINDOWSSHCON, 
+ wxID_TOOLWINDOWSTATICTEXT1, wxID_TOOLWINDOWSTATICTEXT2, 
+ wxID_TOOLWINDOWSTATICTEXT3, wxID_TOOLWINDOWSTATICTEXT4, 
+ wxID_TOOLWINDOWSTATICTEXT5, wxID_TOOLWINDOWTEXTCTRL1, 
+] = [wx.NewId() for _init_ctrls in range(20)]
 
 class toolWindow(wx.Frame):
     def _init_coll_notebook1_Pages(self, parent):
@@ -139,6 +139,12 @@ class toolWindow(wx.Frame):
         self.sshCon.SetValue(False)
         self.sshCon.Bind(wx.EVT_CHECKBOX, self.OnSshConCheckbox,
               id=wxID_TOOLWINDOWSSHCON)
+
+        self.fwdServer = wx.Button(id=wxID_TOOLWINDOWFWDSERVER,
+              label=u'forward server', name=u'fwdServer', parent=self.panel1,
+              pos=wx.Point(296, 176), size=wx.Size(75, 23), style=0)
+        self.fwdServer.Bind(wx.EVT_BUTTON, self.OnFwdServerButton,
+              id=wxID_TOOLWINDOWFWDSERVER)
 
         self._init_coll_notebook1_Pages(self.notebook1)
 
@@ -365,6 +371,17 @@ class toolWindow(wx.Frame):
         event.Skip()
 
     def OnSshConCheckbox(self, event):
+        event.Skip()
+
+    def OnFwdServerButton(self, event):
+        try:
+            session = self.configuration['sessions'][self.comboBox1.GetValue()]
+        except KeyError:
+            session = localSession
+
+        self.fillInSessionInfo(session)
+        self.consoleManager.openFwdServer(session)
+
         event.Skip()
 
 

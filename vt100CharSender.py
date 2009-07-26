@@ -71,4 +71,4 @@ class terminalSendCharBase(vt100Parser):
   def _write(self, data):
     #print '_writing:',data,ord(data[0])
     #Write data to server through connection
-    self.connection._write(data)
+    self.connection.sendApplicationData(data)#Connection is set in appTelnetTransport init function
