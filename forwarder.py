@@ -11,15 +11,14 @@ class teeTransport:
   def write(self, data):
     self.originalTransport.write(data)
     self.dupTransport.write(data)
-
+  def loseConnection(self):
+    pass
 
 class viewTransport:
   def __init__(self, viewTrans):
     self.viewTrans = viewTrans
   def write(self, data):
     self.viewTrans.dataReceived(data)
-  def loseConnection(self):
-    pass
 
 class forwardServer(Protocol):
     def __init__(self, session, fwdSrvMngr):
