@@ -10,19 +10,20 @@ localSession = {'sessionName':'localhost:2111','server':'localhost','port':2111,
                 'ansiLogName':'%(server)s_%(port)s_%(time)s_ansi.log',
                 'ansiLog':logPath+'%(server)s_%(port)s_%(time)s_ansi.log',
                 'charLog':logPath+'char.log',
-                'baseDir':'d:/tmp/','cmdHistState':{}}
+                'baseDir':'d:/tmp/','cmdHistState':{},'sshFlag':False}
 
 def create(parent):
     return toolWindow(parent)
 
-[wxID_TOOLWINDOW, wxID_TOOLWINDOWBUTTON1, wxID_TOOLWINDOWCHECKBOX1, 
- wxID_TOOLWINDOWCOMBOBOX1, wxID_TOOLWINDOWCOMBOBOX2, wxID_TOOLWINDOWCOMBOBOX3, 
- wxID_TOOLWINDOWCOMBOBOX4, wxID_TOOLWINDOWCOMBOBOX5, wxID_TOOLWINDOWDELBUTTON, 
- wxID_TOOLWINDOWNOTEBOOK1, wxID_TOOLWINDOWPANEL1, wxID_TOOLWINDOWPLAYBACK, 
- wxID_TOOLWINDOWSTATICTEXT1, wxID_TOOLWINDOWSTATICTEXT2, 
- wxID_TOOLWINDOWSTATICTEXT3, wxID_TOOLWINDOWSTATICTEXT4, 
- wxID_TOOLWINDOWSTATICTEXT5, wxID_TOOLWINDOWTEXTCTRL1, 
-] = [wx.NewId() for _init_ctrls in range(18)]
+[wxID_TOOLWINDOW, wxID_TOOLWINDOWCHECKBOX1, wxID_TOOLWINDOWCOMBOBOX1, 
+ wxID_TOOLWINDOWCOMBOBOX2, wxID_TOOLWINDOWCOMBOBOX3, wxID_TOOLWINDOWCOMBOBOX4, 
+ wxID_TOOLWINDOWCOMBOBOX5, wxID_TOOLWINDOWCONNECTBUT, 
+ wxID_TOOLWINDOWDELBUTTON, wxID_TOOLWINDOWNOTEBOOK1, wxID_TOOLWINDOWPANEL1, 
+ wxID_TOOLWINDOWPLAYBACK, wxID_TOOLWINDOWSSHCON, wxID_TOOLWINDOWSTATICTEXT1, 
+ wxID_TOOLWINDOWSTATICTEXT2, wxID_TOOLWINDOWSTATICTEXT3, 
+ wxID_TOOLWINDOWSTATICTEXT4, wxID_TOOLWINDOWSTATICTEXT5, 
+ wxID_TOOLWINDOWTEXTCTRL1, 
+] = [wx.NewId() for _init_ctrls in range(19)]
 
 class toolWindow(wx.Frame):
     def _init_coll_notebook1_Pages(self, parent):
@@ -97,11 +98,11 @@ class toolWindow(wx.Frame):
               size=wx.Size(200, 21), style=0, value=u'd:/')
         self.comboBox5.SetLabel(u'd:/')
 
-        self.button1 = wx.Button(id=wxID_TOOLWINDOWBUTTON1, label=u'Connect',
-              name='button1', parent=self.panel1, pos=wx.Point(64, 176),
-              size=wx.Size(75, 23), style=0)
-        self.button1.Bind(wx.EVT_BUTTON, self.OnButton1Button,
-              id=wxID_TOOLWINDOWBUTTON1)
+        self.connectBut = wx.Button(id=wxID_TOOLWINDOWCONNECTBUT,
+              label=u'Connect', name=u'connectBut', parent=self.panel1,
+              pos=wx.Point(64, 176), size=wx.Size(75, 23), style=0)
+        self.connectBut.Bind(wx.EVT_BUTTON, self.OnConnectButButton,
+              id=wxID_TOOLWINDOWCONNECTBUT)
 
         self.checkBox1 = wx.CheckBox(id=wxID_TOOLWINDOWCHECKBOX1,
               label=u'AutoUpdateSessionName', name='checkBox1',
@@ -122,7 +123,7 @@ class toolWindow(wx.Frame):
 
         self.delButton = wx.Button(id=wxID_TOOLWINDOWDELBUTTON,
               label=u'Delete session', name=u'delButton', parent=self.panel1,
-              pos=wx.Point(408, 40), size=wx.Size(75, 23), style=0)
+              pos=wx.Point(440, 40), size=wx.Size(75, 23), style=0)
         self.delButton.Bind(wx.EVT_BUTTON, self.OnDelButtonButton,
               id=wxID_TOOLWINDOWDELBUTTON)
 
@@ -131,6 +132,13 @@ class toolWindow(wx.Frame):
               size=wx.Size(75, 23), style=0)
         self.playback.Bind(wx.EVT_BUTTON, self.OnPlaybackButton,
               id=wxID_TOOLWINDOWPLAYBACK)
+
+        self.sshCon = wx.CheckBox(id=wxID_TOOLWINDOWSSHCON,
+              label=u'SSH enabled?', name=u'sshCon', parent=self.panel1,
+              pos=wx.Point(312, 64), size=wx.Size(88, 13), style=0)
+        self.sshCon.SetValue(False)
+        self.sshCon.Bind(wx.EVT_CHECKBOX, self.OnSshConCheckbox,
+              id=wxID_TOOLWINDOWSSHCON)
 
         self._init_coll_notebook1_Pages(self.notebook1)
 
@@ -199,6 +207,7 @@ class toolWindow(wx.Frame):
         session['port'] = int(self.comboBox3.GetValue())
         session['baseDir'] = self.comboBox5.GetValue()
         session['ansiLog'] = os.path.join(session['baseDir'],self.comboBox4.GetValue())
+        session['sshFlag'] = self.sshCon.IsChecked()
 
         #self.comboBox1.Insert(self.comboBox1.GetValue(), 0)
         self.comboBox2.Insert(self.comboBox2.GetValue(), 0)
@@ -207,7 +216,7 @@ class toolWindow(wx.Frame):
         self.comboBox5.Insert(self.comboBox5.GetValue(), 0)
         #Add strings to configuration
         return session
-        
+    '''
     def updateSession(self, session):
         #Update the information in the configuration
         session['sessionName'] = self.comboBox1.GetValue()
@@ -216,6 +225,7 @@ class toolWindow(wx.Frame):
         session['port'] = int(self.comboBox3.GetValue())
         session['baseDir'] = self.comboBox5.GetValue()
         session['ansiLog'] = os.path.join(session['baseDir'],self.comboBox4.GetValue())
+        session['sshFlag'] = self.sshCon.IsChecked()
 
         #self.comboBox1.Insert(self.comboBox1.GetValue(), 0)
         self.comboBox2.Insert(self.comboBox2.GetValue(), 0)
@@ -224,7 +234,7 @@ class toolWindow(wx.Frame):
         self.comboBox5.Insert(self.comboBox5.GetValue(), 0)
         #Add strings to configuration
         return session
-    
+    '''
     
     def rightMouseDown(self):
         pass
@@ -259,11 +269,6 @@ class toolWindow(wx.Frame):
         from twisted.internet import reactor
         reactor.callLater(1, self.openSessionLaterCallback)
 
-    def OnButton1Button(self, event):
-        #Connect button
-        self.connectSession()
-        event.Skip()
-
     def OnComboBox1Combobox(self, event):
         self.updateSelection()
         event.Skip()
@@ -279,7 +284,11 @@ class toolWindow(wx.Frame):
         self.comboBox3.SetValue(str(session['port']) )
         self.comboBox5.SetValue(session['baseDir']) 
         import os
-        self.comboBox4.SetValue(os.path.basename(session['ansiLog']) )
+        self.comboBox4.SetValue(os.path.basename(session['ansiLog']))
+        try:
+            self.sshCon.SetValue(session['sshFlag'])
+        except:
+            pass
         '''
         for i in session['cmdHist']:
             print i
@@ -321,6 +330,12 @@ class toolWindow(wx.Frame):
         event.Skip()
 
     def OnComboBox3Text(self, event):
+        if self.comboBox3.GetValue() == '22':
+            self.sshCon.SetValue(True)
+            #self.session['sshFlag'] = True
+        else:
+            self.sshCon.SetValue(False)
+            #self.session['sshFlag'] = False
         self.updateAnsiLogPath()
         #event.Skip()
 
@@ -342,6 +357,14 @@ class toolWindow(wx.Frame):
             session = localSession
         self.fillInSessionInfo(session)
         self.consoleManager.openPlayBackSession(session)
+        event.Skip()
+
+    def OnConnectButButton(self, event):
+        #Connect button
+        self.connectSession()
+        event.Skip()
+
+    def OnSshConCheckbox(self, event):
         event.Skip()
 
 

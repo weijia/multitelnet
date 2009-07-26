@@ -15,9 +15,10 @@ import ansiAdv as ansi
 from vt100ParserV3 import vt100Parser
 from scriptHandler import *
 import sys, traceback
-
+from twisted.internet import defer
 #import logging
-
+from logSys import *
+from vt100CharSender import *
 colorKeys = (
     'b', 'r', 'g', 'y', 'l', 'm', 'c', 'w',
     'B', 'R', 'G', 'Y', 'L', 'M', 'C', 'W'
@@ -29,13 +30,13 @@ colorMap = {
     'B': '#626262', 'R': '#ff0000', 'G': '#00ff00', 'Y': '#ffff00',
     'L': '#0000ff', 'M': '#ff00ff', 'C': '#00ffff', 'W': '#ffffff',
 }
+import wx
+from logSwitcher import *
 
-
-
-class styledTextAdapter(vt100Parser):
+class styledTextAdapter(terminalSendCharBase, logSwitcher):
     def __init__(self, styledTextCtrl, configuration, session):
-        vt100Parser.__init__(self)
-        self.ctrl = styledTextCtrl
+        terminalSendCharBase.__init__(self)
+        self.ctrl = styledTextCtrl#This is the terminal frame? No, this is the exact styled ctrl
         self.session = session
         self.configuration = configuration
         logFileNameFmtString = self.session['ansiLog']
@@ -48,7 +49,7 @@ class styledTextAdapter(vt100Parser):
         self.appLog = file(logFileNameString+'.app.log', 'w')
         self.inputLog = file(logFileNameString+'.input.log', 'w')
         #print 'logFileName'+logFileNameString
-        self.connection  = None #When connecting protocol will set this value to connection
+        self.connection  = None #When connecting, appTelnetTransport will set this value to connection
         #connectTelnet(session, self)
         self.x = 0
         self.y = 0
@@ -66,10 +67,10 @@ class styledTextAdapter(vt100Parser):
             #print colorMap[colorMap.keys()[i]]
             self.reverseColorMap[colorMap[colorMap.keys()[i]]] = i
         self.width = 80
-        self.height = 1
+        self.height = 21
         self.logcnt = 0
         self.scrollTop = 0
-        self.scrollBottom = 1
+        self.scrollBottom = 9999
         #self.setWinSize()
         try:
             trig = self.session['triggers']
@@ -88,10 +89,8 @@ class styledTextAdapter(vt100Parser):
             self.log('debug on')
         else:
             self.debugFlag = False
-    def openLogFile(self):
-        import os
-        print self.ansiLogFilename
-        os.spawnv(os.P_NOWAIT, "D:/Program Files/Programmers Notepad/pn.exe", ("\"D:/Program Files/Programmers Notepad/pn.exe\"",self.ansiLogFilename))
+        self.getPassFlag = False
+
 
     def openScript(self, path, delay=5, prompt ='>>> '):
         self.scriptHandler.close()
@@ -99,6 +98,7 @@ class styledTextAdapter(vt100Parser):
 
     def sendScriptCmd(self, line):
         self.stringEntered(line)
+
 
     def write(self, data):#Called by telnet connector
         #logging.error('data:')
@@ -109,47 +109,46 @@ class styledTextAdapter(vt100Parser):
         self.ansiLog.write(data)
         self.ansiParser.parseString(data)
         #print data
-    
-    def realLog(self, str):
-        self.logcnt += 1
-        if self.configuration['global']['logDetail']:
-            print '%d:%s'%(self.logcnt,str)
-            print >>self.appLog,str
-            
-    def noLog(self, str):
-        pass
-
-    def switchDebug(self):
-        print 'calling switchDebug'
-        if self.debugFlag:
-            print 'end debug'
-            self.log('end debug')
-            self.debugFlag = False
-            self.log = self.noLog
-            #print self.log
-        else:
-            print 'start debug'
-            self.configuration['global']['logDetail'] = True
-            self.log = self.realLog
-            self.debugFlag = True
-            self.log('start debug')
-            #print self.log
 
 #-------------------------------------------------------------------------------
-    
+    def char(self, event):#A char entered.
+        self.log('stylee:char')
+        self.checkSizeAndSendWindowSize()
+        if self.connection and event.GetKeyCode():
+            self.send(chr(event.GetKeyCode()))
+            self.log('char event:%d'%event.GetKeyCode())
+            
+    def keyDown(self, event):
+        '''
+        The connection should return False if it don't want the key down message
+        be handled by others again
+        '''
+        self.log('styele:keyDown%d'%event.GetKeyCode())
+        self.checkSizeAndSendWindowSize()
+        if event.GetKeyCode() == wx.WXK_CONTROL:
+            return
+        #First check if the key is combined with other control key
+        if event.ControlDown():
+            self.writeCtrlWithKey(event.GetKeyCode())
+            #The above function will always return False. so we wont call skip here
+            self.log('ctrlKey pressed with:%d\n'%event.GetKeyCode())
+            #We handled the key already using the above function, so do not need
+            #further processing. no Skip() call needed.
+            return
+
+        if self.writeSpecialKey(event.GetKeyCode()):
+            self.log('connection writeKey:%d\n'%event.GetKeyCode())
+            event.Skip()#if the above code return true, then continu process the message
+            
     def stringEntered(self, data):
+        print data
+        print '----------------------------------'
         self.sendString(data.encode('utf8'))
         self.sendEnter()
-
-    def sendString(self, str):
-        self.checkSizeAndSendWindowSize()
-        self.inputLog.write(str)
-        self.connection.write(str)
-        
         
     def sendEnter(self):
-        self.sendString('\r\n')
-
+        self.writeSpecialKey(ptKey_cr)
+        
 #-------------------------------------------------------------------------------
     def setWinSize(self):
         visi = self.ctrl.LinesOnScreen()
@@ -166,23 +165,7 @@ class styledTextAdapter(vt100Parser):
         if self.setWinSize():
             self.connection.sendWindowSize()
         
-    def char(self, event):#A char entered.
-        self.log('styled:char')
-        self.checkSizeAndSendWindowSize()
-        if self.connection and event.GetKeyCode():
-            self.connection.write(chr(event.GetKeyCode()))
-            self.log('char event:%d'%event.GetKeyCode())
-            
-    def keyDown(self, event):
-        self.log('styeld:keyDown')
-        self.checkSizeAndSendWindowSize()
-        #First check if the key is combined with other control key
-        if event.ControlDown():
-            self.connection.writeCtrlKey(event.GetKeyCode())
-            #The above function will always return False. so we wont call skip here
-            return
-        if self.connection.writeKey(event.GetKeyCode()):
-            event.Skip()#if the above code return true, then continu process the message
+
     
     def saveAll(self):
         self.ansiLog.close()
@@ -400,7 +383,7 @@ class styledTextAdapter(vt100Parser):
                 #Need to append new line
                 for k in range(num-i):
                     self.ctrl.NewLine()
-                    self.log('styled ctrl: new line added')
+                    self.log('styled ctrl: new line added, no x pos change')
                     #self.ctrl.CharRight()
                 return True
         return False#Last line and end of the doc
@@ -419,15 +402,20 @@ class styledTextAdapter(vt100Parser):
         self.ctrl.LineEnd()
         end = self.ctrl.GetCurrentPos()
         self.ctrl.GotoPos(self.currentCaretPos)
+        newCurLine = self.ctrl.GetCurrentLine()
+        self.log('styledV3:curLine:%d'%newCurLine)
         for i in range(num):#i started from 0
             if self.ctrl.GetCurrentPos() == end:#The last move
                 self.lineEnd = True
                 self.ctrl.LineEndExtend()
-                #self.log('move to end of the line,i:%d,%s,%d'%(i,' '*(num-i), (num-i)))
+                self.log('move to end of the line,i:%d,%s,%d'%(i,' '*(num-i), (num-i)))
                 self.ctrl.ReplaceSelection(' '*(num-i))
                 break
             self.log('not end')
             self.ctrl.CharRight()
+        newCurLine = self.ctrl.GetCurrentLine()
+        self.log('styledV3:curLine:%d'%newCurLine)
+
         self.currentCaretPos = self.ctrl.GetCurrentPos()
         self.cursorAtEnd = False
 
@@ -555,6 +543,7 @@ class styledTextAdapter(vt100Parser):
     
     def step(self, num = 10):
         self.write(self.playbackFile.read(num))
+        self.ctrl.SetFocus()
     
 
     def clientConnectionLost(self, reason):
@@ -588,3 +577,7 @@ class styledTextAdapter(vt100Parser):
         self.connected = False
         self.ctrl.frame.title(self.session['sessionName']+"client connection failed" + str(reason))
 
+    def getPassword(self):
+        self.getPassDefer = defer.Deferred()
+        self.getPassFlag = True
+        return self.getPassDefer

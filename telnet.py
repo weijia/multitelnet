@@ -340,8 +340,10 @@ class Telnet(protocol.Protocol):
             WONT: self.telnet_WONT,
             DO: self.telnet_DO,
             DONT: self.telnet_DONT}
+        self.transport = None
 
     def _write(self, bytes):
+        #print self.transport
         self.transport.write(bytes)
 
     class _OptionState:
