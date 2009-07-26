@@ -37,7 +37,7 @@ class multiConsoleManager:
         self.toolbox.createTempSession(server,port, triggers, timeoutHandler)
     
     def openFwdServer(self, session):
-        self.fwdSvrMngr.createForwardServer(session)
+        return self.fwdSvrMngr.createForwardServer(session)
     
     def closeAll(self):
         for i in self.childs:

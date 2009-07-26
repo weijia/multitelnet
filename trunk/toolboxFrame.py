@@ -380,8 +380,12 @@ class toolWindow(wx.Frame):
             session = localSession
 
         self.fillInSessionInfo(session)
-        self.consoleManager.openFwdServer(session)
-
+        port = self.consoleManager.openFwdServer(session)
+        import subprocess
+        prog = ['C:\\Program Files\\PuTTY\\putty.exe', 'telnet://localhost:%d'%port]
+        print prog
+        self.p = subprocess.Popen(prog)
+        
         event.Skip()
 
 
