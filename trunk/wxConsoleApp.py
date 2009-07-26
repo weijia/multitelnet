@@ -22,8 +22,11 @@ global consoleMan
 consoleMan = None
 global appStartCallback
 
+
+
+
 def addCallback(func):
-    print func
+    #print func
     global appStartCallback
     appStartCallback = func
 
@@ -36,9 +39,9 @@ class BoaApp(wx.App):
         global consoleMan
         consoleMan = self.main.consoleManager
         self.SetTopWindow(self.main)
-        print consoleMan
+        #print consoleMan
         global appStartCallback
-        print appStartCallback
+        #print appStartCallback
         if appStartCallback != None:
             appStartCallback()
         

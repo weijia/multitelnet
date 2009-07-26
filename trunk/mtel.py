@@ -1,6 +1,6 @@
 import wxConsoleApp
 from trigger import *
-
+import uuid
 #used for user to communicate between sessions
 uservar = {}
 
@@ -8,6 +8,8 @@ def execute(script):
     wxConsoleApp.addCallback(script)
     wxConsoleApp.mcpUp()
 
+def getSessionFromUuid(aUuid):
+    return wxConsoleApp.consoleMan.sessionList[aUuid]
 
 class sess(object):
     def __init__(self, server, port = 23):
@@ -18,7 +20,7 @@ class sess(object):
         self.trgs = {}
         #global wxConsoleApp.consoleMan
         #self.man = wxConsoleApp.consoleMan
-        print wxConsoleApp.consoleMan
+        #print wxConsoleApp.consoleMan
         #global consoleMan
         #print consoleMan
         self.server = server
@@ -28,7 +30,10 @@ class sess(object):
         self.curSingleTrigger = 0
         self.singleTriggers = [[]]
         self.singleCmd = []
-        
+        self.uuid = str(uuid.uuid4())
+        wxConsoleApp.consoleMan.sessionList[self.uuid] = self
+
+
     #override the assign operator
     def __setattr__(self, name, value):
         if name == 't':
@@ -62,6 +67,7 @@ class sess(object):
             self.realConnectToServer()
         '''
         self.realConnectToServer()
+        return True
     def realConnectToServer(self):
         wxConsoleApp.consoleMan.openTmpSess(self.server, self.port, self.trgs, self.timeoutHandler)
     def addSingleTrigger(self, value):

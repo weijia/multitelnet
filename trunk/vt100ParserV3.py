@@ -89,17 +89,9 @@ class vt100Parser():
                     self.x += 1
             elif b == 10:# New line
                 self.log('vt100:new line')
-                #self.home()
-                #self.x = 0#Only chr(13) will move cursor to 0
-                self.lineDownWithScroll(1)
-                '''
-                self.y += 1
-                if self.y > self.getHeight():
-                    self.y = self.getHeight()
-                '''
+                self.newLineCharReceived()
             elif b == 13:#\r
-                self.home()
-                self.x = 0
+                self.crCharReceived()
             elif 32 <= b < 127:
                 #self._writeAtTheEnd(ch, fg, bg)
                 self.writeChar(ch, fg, bg)
@@ -112,7 +104,15 @@ class vt100Parser():
                 self.log('127, no op')
             '''
             #self.log('current x:%d'%self.x)
-    
+    def newLineCharReceived(self):
+        #self.home()
+        #self.x = 0#Only chr(13) will move cursor to 0
+        self.lineDownWithScroll(1)
+        '''
+        self.y += 1
+        if self.y > self.getHeight():
+            self.y = self.getHeight()
+        '''
     def outputText(self, outputFunc, text):
         try:
             return outputFunc(text)
@@ -149,10 +149,11 @@ class vt100Parser():
         #Remove bell char and find other char except \r and \n
         #newstr = i.text.translate(self.transTable, chr(7))
         newstr = i.text.replace(chr(7),'').replace(chr(9),' '*self.tabLength)
+        #newstr = newstr.replace(chr(13)+chr(0),chr(13)+chr(10))
         self.log('newstr:%s'%newstr)
                 
         if newstr.find(chr(8)) != -1:
-            #chr(8)exist
+            #chr(8)exist, need to write the text one by one
             self.log('spacial char exist')
             self.writeText(i.text, fg, bg)
         else:
@@ -347,11 +348,14 @@ class vt100Parser():
                 #Currently real cursor is at self.scrollTop
                 self.lineMove(self.Bottom - self.scrollTop)
     '''
+    def startOfLine(self):
+        self.home()
+        self.x = 0
     def lineDownWithScroll(self, start):
         self.log('cur x:%d'%self.x)
         self.log('scroll top:%d, scroll bottom:%d, height:%d'%(self.scrollTop, self.scrollBottom, self.getHeight()))
         if (self.getHeight() == self.scrollBottom+1) and (0 == self.scrollTop):
-            #The scroll area is equal to the window
+            #The scroll area is equal to the current window area
             self.log('linedownwithscroll x:%d'%self.x)
             #self.home()
             self.lineMove(start)

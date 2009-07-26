@@ -11,7 +11,7 @@ from telnet import TelnetProtocol
 from telnet import TelnetTransport
 from telnet import NAWS
 
-import logging
+from logSys import *
 '''
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -19,25 +19,6 @@ logging.basicConfig(level=logging.DEBUG,
                     filename='d:\\log.txt',
                     filemode='w')
 '''
-EscCode = '\x1B['
-
-vt100TermKeyMapping = {
-    8: chr(127),#chr(8),#Backspace
-    13: '\r\n',#Enter, per protocol, it is the same as return
-    9: chr(9),#tab
-    27: chr(27),#esc
-    314: EscCode+'D',#wx.WXK_LEFT
-    315: EscCode+'A',#wx.WXK_UP
-    316: EscCode+'C',#wx.WXK_RIGHT
-    317: EscCode+'B'#wx.WXK_DOWN
-}
-
-#Not fully understood
-vt100TermKeyComplexMapping = {
-    #input  telnetOption    enabledValue    disabledValue
-    13:     [0x22,          ['\r\n',        '\r'+chr(0)]]#Enter
-}
-
 
 class optionLogTelnetProtocol(TelnetProtocol):
     def __init__(self, protocol):
@@ -46,55 +27,52 @@ class optionLogTelnetProtocol(TelnetProtocol):
         
     def unhandledCommand(self, command, argument):
         try:
-            logging.error('unhandledCmd:'+command + argument)
+            cl('unhandledCmd:'+command + argument)
         except:
-            logging.error('unhandledCmd')
+            cl('unhandledCmd')
 
     def unhandledSubnegotiation(self, command, bytes):
-        logging.error('unhandledNeg:'+command + bytes)
+        cl('unhandledNeg:'+command + bytes)
 
     def enableLocal(self, option):
+        cl('enable local:',ord(option), option)
         if None != self.negFlag :
             self.negFlag = True
         if option == chr(24):
-            logging.error('enableLocal termtype 24')
+            cl('enableLocal termtype 24')
+            #Return True if termtype will be enabled.
             return True
             #self.protocol.sendTermType()
         elif option == chr(01):#ECHO
-            logging.error('enableLocal echo')
+            cl('enableLocal echo')
             return True
         elif option == NAWS:
             #self.protocol.will(option)
             return True
-        logging.error('enableLocal:'+ option)
+        #cl('enableLocal:'+ option)
         #self.sendInitialNeg()#We send initial neg only we received neg command so we are sure the other part support telnet protocol
 
     def enableRemote(self, option):
         #The remote here is said from the server side, so it's server ask client to support echo?
         #Answser is no. Server is offer to let himself enable ECHO
         if option == chr(01):#ECHO
-            logging.error('enableRemote echo')
-            #We are echoing so ask server do no echo
+            cl('enableRemote echo')
+            #We are echoing so ask server do not echo
             return True
-        logging.error('enableRemote:'+ option)
+        cl('enableRemote:'+ option,ord(option))
 
     def disableLocal(self, option):
-        logging.error('disableLocal:'+ option)
+        cl('disableLocal:'+ option,ord(option))
 
     def disableRemote(self, option):
-        logging.error('disableRemote:'+ option)
-    '''
-    def sendInitialNeg(self):
-        if self.negFlag:
-            self.protocol.sendTermType()
-            self.negFlag = None
-    '''
+        cl('disableRemote:'+ option,ord(option))
 
 class appTelnetTransport(TelnetTransport):
     def __init__(self, view):
         self.view = view
         view.connection = self
-        self.protocol = self.protocol = optionLogTelnetProtocol(self)
+        #The following will be used by Telnet instance
+        self.protocol = optionLogTelnetProtocol(self)
         Telnet.__init__(self)
         self.negotiationMap[chr(24)] = self.sendTermType
         self.negotiationMap[chr(0x1f)] = self.sendWindowSize
@@ -110,39 +88,7 @@ class appTelnetTransport(TelnetTransport):
     def applicationDataReceived(self, data):
         self.view.write(data)
         #print data
-    def writeCtrlKey(self, key):#Key should only be 'A'-'Z'
-        #"CTRL" key pressed with key.
-        sendKey = key-ord('A')+1#'A' will send 1 to server
-        if self.getOptionState(chr(01)).him.state == 'no':
-            #Server will not echo, so we need to echo, it should be ^A etc.
-            self.view.log('will echo')
-            if key>255:
-                self.view.log('out of 256%d'%key)
-            else:
-                self.view.write('^'+chr(key))
-        self._write(chr(sendKey))
-        return False#tell the window msg hendler do not process the message again
 
-    def writeKey(self, key):
-        #Translate the input key according to current telnet mode.
-        try:
-            sendKey = vt100TermKeyMapping[key]
-        except KeyError:
-            self.view.log('no mapping: %d'%key)
-            return True
-        self.write(sendKey)
-        #print 'entered:%c,%d'%(chr(key),key)
-        return False
-        
-    def write(self, data):
-        s = self.getOptionState(chr(01))#ECHO?
-        if s.him.state == 'no':
-            #Server will not echo, so we need to echo
-            #logging.error('our echo state:'+str(s.us.state))
-            #print 'server echo state:'+s.him.state
-            self.view.write(data)
-        #print 'our echo state:'+s.us.state
-        self._write(data)
     '''
     #We can handle option in TelnetProtocol, if we return True, it means we support the option
     def getOptionState(self, option):
@@ -165,9 +111,9 @@ class appTelnetTransport(TelnetTransport):
 
         if option == chr(24):
             #self.will(option)
-            logging.error('neo 24')
+            cl('neo 24')
         elif option == chr(01):
-            logging.error('echo')
+            cl('echo')
             #self.protocol.will(option)
         elif option == NAWS:
             #self.protocol.will(option)
@@ -176,7 +122,7 @@ class appTelnetTransport(TelnetTransport):
             value.him = self._Perspective()
             return self.options.setdefault(opt, )
         
-        logging.error('enableLocal:'+ option)
+        cl('enableLocal:'+ option)
         return TelnetTransport.getOptionState(self, option)
     '''
     
@@ -184,7 +130,9 @@ class appTelnetTransport(TelnetTransport):
         #self.will(chr(24))#need not since it is acked already
         #The server seems do not reply for the above command, send it manually
         #Write termtype to server
-        self.requestNegotiation('termtype', chr(24)+chr(0)+'vt100')
+        self.requestNegotiation('termtype', chr(24)+chr(0)+'XTERM')
+        self.termType = 'XTERM'
+        self.view.setTermType('XTERM')
         #self.sendWindowSize()
         
     def sendWindowSize(self):
@@ -195,12 +143,14 @@ class appTelnetTransport(TelnetTransport):
             chr((self.view.getWidth()&0xff00)>>8)+chr((self.view.getWidth()&0xff))+\
             chr((self.view.getHeight()&0xff00)>>8)+chr((self.view.getHeight()&0xff))
             )
+        print 'winsize width:%d'%self.view.getWidth()
+        print 'winsize height:%d'%self.view.getHeight()
 
-        
+    '''
     def callbackfunc(self, option):
-        logging.error('callback called')
+        cl('callback called')
         self.will(option)
-        
+    '''
 class telnetFactory(ClientFactory):
     def __init__(self, view):
         self.view = view

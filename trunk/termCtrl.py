@@ -150,6 +150,7 @@ class termWin(wx.Frame):
         self.termWinContent.cursorUpdated = True
         #self.termWinContent.SetEOLMode(wx.stc.STC_EOL_CR)
         self.termWinContent.SetSelAlpha(128)
+        self.enterFlag = False
 
 
     def OnToolBar1Tools0Tool(self, event):
@@ -161,9 +162,12 @@ class termWin(wx.Frame):
         print '-------------------------closing frame'
         self.adapter.saveAll()
         event.Skip()
-
+    
     def OnTermWinCmdComboText(self, event):
         print 'combo text'
+        if self.enterFlag:
+            print 'skip first'
+            event.Skip()
         if not self.backspaceFlag:
             exist = self.termWinCmdCombo.GetValue()
             try:
@@ -245,6 +249,8 @@ class termWin(wx.Frame):
             print 'delete pressed, index is%d'%self.termWinCmdCombo.GetSelection()
             self.termWinCmdCombo.Delete(self.termWinCmdCombo.GetSelection())
         '''
+        if curKey == wx.WXK_RETURN:
+            self.enterFlag = True
         event.Skip()
 
 
@@ -257,12 +263,10 @@ class termWin(wx.Frame):
         self.adapter.char(event)
         #event.Skip()
 
-    def OnTermWinContentRightDown(self, event):
-        self.termWinContent.cursorUpdated = True
-        self.adapter.rightMouseDown(event)    
-        #event.Skip()
+
 
     def pasteClipboard(self):
+        print 'pasteClipboard called'
         text_data = wx.TextDataObject()
         if wx.TheClipboard.Open():
             success = wx.TheClipboard.GetData(text_data) 
@@ -320,6 +324,7 @@ class termWin(wx.Frame):
 
     def commonConnect(self, configuration, session):
         from telnetConnector import connectTelnet
+        from sshConnector import connectSsh
         for i in self.session['cmdHist']:
             #print 'command history'+i
             self.termWinCmdCombo.Insert(i, 0)
@@ -348,8 +353,10 @@ class termWin(wx.Frame):
             #print v[1]
             self.termWinCmdCombo.Insert(v[1],0)
 
-
-        connectTelnet(session, self.adapter)
+        if self.session['sshFlag']:
+            connectSsh(session, self.adapter)
+        else:
+            connectTelnet(session, self.adapter)
         self.SetTitle(self.session['sessionName'])
 
     def connect(self, configuration, session):
@@ -360,7 +367,7 @@ class termWin(wx.Frame):
         self.commonConnect(configuration, session)
 
     def OnTermWinCmdComboTextEnter(self, event):
-        print 'string enter'
+        print 'term ctrl:string enter'
         va = self.termWinCmdCombo.GetValue()
         self.termWinCmdCombo.SelectAll()
         #if wx.NOT_FOUND == self.termWinCmdCombo.FindString(va):#It is the history, so it should contain dup information
@@ -372,7 +379,7 @@ class termWin(wx.Frame):
             while True:
                 self.session['cmdHist'].remove(va)
         except ValueError:
-            print 'no value'
+            print 'term ctrl: no value'
             pass
         self.session['cmdHist'].insert(0, va)
         try:
@@ -380,10 +387,10 @@ class termWin(wx.Frame):
         except KeyError:
             #The dict of self.session['cmdHistState'] is inited in above for sure
             self.session['cmdHistState'][va] = 1
-        
+
         #print 'command history:'+va
         self.adapter.stringEntered(va)
-        event.Skip()
+        #event.Skip()#This statement will cause combo to generate a bell
 
     def title(self, s):
         self.SetTitle(s)
@@ -406,8 +413,14 @@ class termWin(wx.Frame):
     def OnTermWinContentRightUp(self, event):
         #Disable the right click menu
         #event.Skip()
+        #self.adapter.rightMouseDown(event)
         pass
-
+        
+    def OnTermWinContentRightDown(self, event):
+        self.termWinContent.cursorUpdated = True
+        self.adapter.rightMouseDown(event)    
+        #event.Skip()
+        
     def OnTermWinToolBarTools2Tool(self, event):
         self.adapter.switchDebug()
         #event.Skip()
