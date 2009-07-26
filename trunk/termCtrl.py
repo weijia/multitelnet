@@ -151,6 +151,9 @@ class termWin(wx.Frame):
         #self.termWinContent.SetEOLMode(wx.stc.STC_EOL_CR)
         self.termWinContent.SetSelAlpha(128)
         self.enterFlag = False
+        self.adapter = None
+        self.session = None
+        self.configuration = None
 
 
     def OnToolBar1Tools0Tool(self, event):

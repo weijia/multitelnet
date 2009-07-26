@@ -151,6 +151,8 @@ class appTelnetTransport(TelnetTransport):
         cl('callback called')
         self.will(option)
     '''
+from telnetClient import *
+
 class telnetFactory(ClientFactory):
     def __init__(self, view):
         self.view = view
@@ -158,7 +160,7 @@ class telnetFactory(ClientFactory):
         print("Start to connect")
     def buildProtocol(self,addr):
         print("build protocol")
-        return appTelnetTransport(self.view)
+        return telnetClient(self.view)
     def clientConnectionLost(self,connector,reason):
         self.view.clientConnectionLost(reason)
         print("client connection lost" + str(reason))
