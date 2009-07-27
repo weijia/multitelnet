@@ -20,7 +20,7 @@ import mtel
 
 '''
 
-
+#Every xml function should return a value.
 class mtelXmlRpcServer(xmlrpc.XMLRPC):
     """An example object to be published."""
     def getSessionFromUuid(uuid):
@@ -35,6 +35,7 @@ class mtelXmlRpcServer(xmlrpc.XMLRPC):
         Connect to server
         """
         mtel.getSessionFromUuid(sess).con()
+        return 'connecting'
     def xmlrpc_t(self, sess, pattern, command):
         """
         Set a trigger
@@ -50,3 +51,5 @@ class mtelXmlRpcServer(xmlrpc.XMLRPC):
         Raise a Fault indicating that the procedure should not be used.
         """
         getSessionFromUuid(sess).c = action
+    def xmlrpc_helloworld(self):
+        return 'helloWorld'
