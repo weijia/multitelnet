@@ -29,7 +29,7 @@ class sess(object):
         self.triggerIndex = 0
         self.curSingleTrigger = 0
         self.singleTriggers = [[]]
-        self.singleCmd = []
+        self.singleCmd = []#this is used to store the command of single trigger, as there might be more than 1 
         self.uuid = str(uuid.uuid4())
         wxConsoleApp.consoleMan.sessionList[self.uuid] = self
 
@@ -43,7 +43,7 @@ class sess(object):
             #Set timeout handler
             self.timeoutHandler = value
         elif name == 's':#Send
-            self.addCmd(value)
+            self.execCmd(value)
         elif name == 'w':#wait for something
             self.addSingleTrigger(value)
         else:
@@ -69,8 +69,12 @@ class sess(object):
         self.realConnectToServer()
         return True
     def realConnectToServer(self):
-        wxConsoleApp.consoleMan.openTmpSess(self.server, self.port, self.trgs, self.timeoutHandler)
+        self.sess = wxConsoleApp.consoleMan.openTmpSess(self.server, self.port, self.trgs, self.timeoutHandler)
+        self.sess['runOnce'] = []
     def addSingleTrigger(self, value):
+        '''
+        This function is used to set only 1 trigger
+        '''
         self.triggerIndex += 1
         self.singleTriggers.append(value)
         self.singleCmd.append({})
@@ -79,4 +83,7 @@ class sess(object):
     def singleTriggerCallback(self, sess):
         return self.singleCmd[self.curSingleTrigger]
     def addCmd(self, value):
+        print self.triggerIndex
         self.singleCmd[self.triggerIndex].append(value)
+    def execCmd(self, value):
+        self.sess['runOnce'].append(value)

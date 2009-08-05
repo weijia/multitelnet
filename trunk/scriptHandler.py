@@ -170,7 +170,7 @@ class staticScriptHandler(timeoutAndLineFeedHandler):
         self.delayCallFunc(self.callStaticScript)
 
 class triggerHandler(timeoutAndLineFeedHandler):
-    def __init__(self, notifObj, session, delay=25):
+    def __init__(self, notifObj, session, delay=5):
         self.session = session
         timeoutAndLineFeedHandler.__init__(self, notifObj, delay)
     
@@ -196,6 +196,9 @@ class triggerHandler(timeoutAndLineFeedHandler):
     def timeoutAction(self):
         #self.delaySendCmd('\r\n')
         try:
+            if self.session.has_key('runOnce'):
+              self.delaySendCmd(self.session['runOnce'].pop(0))
+
             act = self.session['timeoutHandler']
             if isinstance(act, str):
                 self.delaySendCmd(act)

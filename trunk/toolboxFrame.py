@@ -274,6 +274,7 @@ class toolWindow(wx.Frame):
         self.openLater[session['sessionName']] = session
         from twisted.internet import reactor
         reactor.callLater(1, self.openSessionLaterCallback)
+        return session
 
     def OnComboBox1Combobox(self, event):
         self.updateSelection()

@@ -1,5 +1,5 @@
 from termCtrl import *
-from styledTextCtrlAdapterV3 import *
+
 
 
 class viewManager:
@@ -8,9 +8,7 @@ class viewManager:
     self.configuration = config
   def createView(self, session):
     child = termWin(None)
-    child.adapter = styledTextAdapter(child.termWinContent, self.configuration, session)
-    self.views.append(child)
-    child.session = session
-    child.configuration = self.configuration
+    child.initSession(self.configuration, session, self)
     child.Show()
+    self.views.append(child)
     return child

@@ -9,7 +9,7 @@ class telnetFactory(ClientFactory):
         print("build protocol")
         return telnetClient(self.view)
     def clientConnectionLost(self,connector,reason):
-        self.view.clientConnectionLost(reason)
+        self.view.onDisconnected(reason)
         print("client connection lost" + str(reason))
     def clientConnectionFailed(self,connector,reason):
         self.view.clientConnectionFailed(reason)

@@ -1,6 +1,7 @@
 from termCtrl import *
 from forwardServerManager import *
 from viewManager import *
+from clientManager import *
 
 
 class multiConsoleManager:
@@ -16,14 +17,16 @@ class multiConsoleManager:
         gM = self
         self.vwMngr = viewManager(self.config)
         self.fwdSvrMngr = forwardServerManager(self.vwMngr, self.config)
+        self.clientSvr = clientManager(self.vwMngr, self.config)
         
-    def openSession(self, session):
+    def openSessionOriginal(self, session):
         child = termWin(self.toolbox)
         self.childs.append(child)
         child.connect(self.config, session)
         #print session['baseDir']
         child.Show()
         return child#return the opened session
+        
     def openPlayBackSession(self, session):
         child = termWin(self.toolbox)
         self.childs.append(child)
@@ -34,11 +37,16 @@ class multiConsoleManager:
     def openTmpSess(self, server, port, triggers = None, timeoutHandler = None):
         #print self.toolbox
         #print 'server:%s,port:%d'%(server,port)
-        self.toolbox.createTempSession(server,port, triggers, timeoutHandler)
+        return self.toolbox.createTempSession(server,port, triggers, timeoutHandler)
     
     def openFwdServer(self, session):
         return self.fwdSvrMngr.createForwardServer(session)
-    
+
+    def openSession(self, session):
+        child = self.clientSvr.createTelnetClient(session)
+        self.childs.append(child)
+        return child#return the opened session
+
     def closeAll(self):
         for i in self.childs:
             try:
