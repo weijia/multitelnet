@@ -29,7 +29,8 @@ sshTermKeyMapping = {
 class appSshTransport():
     def __init__(self, view):
         self.view = view
-        view.connection = self
+        self.view.setConnection(self)
+        print 'app transport created'
         #self.protocol = self.protocol = optionLogTelnetProtocol(self)
         #Telnet.__init__(self)
         #self.negotiationMap[chr(24)] = self.sendTermType
@@ -45,7 +46,7 @@ class appSshTransport():
         pass
     def dataReceived(self, data):
         self.applicationDataReceived(data)
-        
+
     def applicationDataReceived(self, data):
         self.view.write(data)
         #print data
@@ -83,53 +84,9 @@ class appSshTransport():
         print 'entered:%c,%d'%(chr(key),key)
         return False
         
-    def write(self, data):
-        '''
-        s = self.getOptionState(chr(01))#ECHO?
-        if s.him.state == 'no':
-            #Server will not echo, so we need to echo
-            #logging.error('our echo state:'+str(s.us.state))
-            #print 'server echo state:'+s.him.state
-            self.view.write(data)
-        #print 'our echo state:'+s.us.state
-        '''
+    def sendApplicationData(self, data):
         self._write(data)
-    '''
-    #We can handle option in TelnetProtocol, if we return True, it means we support the option
-    def getOptionState(self, option):
-        class _OptionState:
-            class _Perspective:
-                def __init__(self, state = 'no', neg = False, onRes = None)
-                    self.state = state
-                    self.negotiating = neg
-                    self.onResult = onRes
 
-                def __str__(self):
-                    return self.state + ('*' * self.negotiating)
-
-            def __init__(self):
-                self.us = self._Perspective()
-                self.him = self._Perspective()
-                
-            def __repr__(self):
-                return '<_OptionState us=%s him=%s>' % (self.us, self.him)
-
-        if option == chr(24):
-            #self.will(option)
-            logging.error('neo 24')
-        elif option == chr(01):
-            logging.error('echo')
-            #self.protocol.will(option)
-        elif option == NAWS:
-            #self.protocol.will(option)
-            value = self._OptionState()
-            value.us = self._Perspective()
-            value.him = self._Perspective()
-            return self.options.setdefault(opt, )
-        
-        logging.error('enableLocal:'+ option)
-        return TelnetTransport.getOptionState(self, option)
-    '''
     
     def sendTermType(self, bytes):
         #self.will(chr(24))#need not since it is acked already
@@ -172,6 +129,8 @@ class SSHClientFactory(protocol.ClientFactory):
 class SSHClientTransport(transport.SSHClientTransport):
     def __init__(self, view):
         self.view = view
+        #self.view.setConnection(self)
+        print 'client transport created'
 
     def receiveError(self, code, desc):
         global exitStatus
@@ -197,9 +156,15 @@ class SSHClientTransport(transport.SSHClientTransport):
         user = getpass.getuser()
         self.requestService(SSHUserAuthClient(user, SSHConnection(self.view), self.view))
 
+from clientManager import *
+
+
 class SSHUserAuthClient(userauth.SSHUserAuthClient):
     def __init__(self, user, conn, view):
         self.view = view
+        connection = clientBase()
+        connection.sendApplicationData = self.write
+        self.view.setConnection(connection)
         userauth.SSHUserAuthClient.__init__(self, user, conn)
         self.kept = ''
 
@@ -218,17 +183,17 @@ class SSHUserAuthClient(userauth.SSHUserAuthClient):
         self.writeChar(data)
     
     def writeChar(self, data):
-        #print 'auth start write data:%s'%data
+        print 'auth start write data:%s'%data
         self.kept += data
         keptParts = self.kept.split('\r')
-        #print keptParts
-        #print data
-        #print ord(data[-1])
-        #print '----------------'
+        print 'kept part:',keptParts
+        print data
+        print 'last char ord:',ord(data[-1])
+        print '----------------'
         if (len(keptParts) > 1) or (data[-1] == '\r'):
             self.kept = '\r'.join(keptParts[1:])
             self.sendString(keptParts[0])
-        print 'writing data'
+        print 'ssh connector: writing data'
         
     def writeKey(self, keyCode):
         '''
@@ -245,8 +210,8 @@ class SSHUserAuthClient(userauth.SSHUserAuthClient):
     
     def sendString(self, text):
         self.view.write('\r\n')
-        self.view.getPassDefer.callback(self.kept)
-        #print 'entering data:%s'%self.kept
+        self.view.getPassDefer.callback(text)
+        print 'entering data:%s'%text
         
     def loseConnection(self):
         pass
@@ -254,6 +219,7 @@ class SSHUserAuthClient(userauth.SSHUserAuthClient):
 class SSHConnection(connection.SSHConnection):
     def __init__(self, view):
         self.view = view
+        #self.view.setConnection(self)
         connection.SSHConnection.__init__(self)
 
     def serviceStarted(self):
@@ -292,6 +258,7 @@ class SSHSession(channel.SSHChannel):
 
     def eofReceived(self):
         print('got eof')
+        import sys
         sys.stdin.close()
 
     def closed(self):

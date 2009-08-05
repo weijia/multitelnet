@@ -40,16 +40,24 @@ class mtelXmlRpcServer(xmlrpc.XMLRPC):
         """
         Set a trigger
         """
-        getSessionFromUuid(sess).t = pattern, command
+        mtel.getSessionFromUuid(sess).t = pattern, command
     def xmlrpc_tmo(self, action):
         """
         Raise a Fault indicating that the procedure should not be used.
         """
         getSessionFromUuid(sess).tmo = action
+        return sess
     def xmlrpc_c(self, action):
         """
         Raise a Fault indicating that the procedure should not be used.
         """
-        getSessionFromUuid(sess).c = action
+        mtel.getSessionFromUuid(sess).c = action
+        return sess
+    def xmlrpc_s(self, sess, action):
+        """
+        Send command to terminal
+        """
+        mtel.getSessionFromUuid(sess).s = action
+        return sess
     def xmlrpc_helloworld(self):
         return 'helloWorld'

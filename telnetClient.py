@@ -72,7 +72,8 @@ class optionLogTelnetProtocol(TelnetProtocol):
 class appTelnetTransport(TelnetTransport):
     def __init__(self, view):
         self.view = view
-        view.connection = self
+        #view.connection = self
+        self.view.setConnection(self)
         #The following will be used by Telnet instance
         self.protocol = optionLogTelnetProtocol(self)
         Telnet.__init__(self)
@@ -88,7 +89,7 @@ class appTelnetTransport(TelnetTransport):
     '''
 
     def applicationDataReceived(self, data):
-        self.view.write(data)
+        self.view.dataReceived(data)
         #print data
 
     '''

@@ -17,26 +17,44 @@ class terminalSendCharBase(vt100Parser):
   def __init__(self, *argv):
     vt100Parser.__init__(self, *argv)
     self.behaviour = vt100DefaultBehaviour()
+    
+  def sendData(self, d):
+    for i in d:
+      c = self.behaviour.translateSpecialChar(i)
+      if c == None:
+        #Normal key, send itself
+        self._write(i)
+      else:
+        #Special key, send translated char
+        self._write(c)
+
+
+  def sendKeyWithCtrl(self, key):#Key should only be 'A'-'Z'
+    #"CTRL" key pressed with key.
+    sendKey = key-ord('A')+1#'A' will send 1 to server
+    self._write(chr(sendKey))
+    return False#tell the window msg hendler do not process the message again
+    
+#------------------------------------------------------------------------------------
+#The following codes should not be called
+  def setTermType(self, termType):
+    self.behaviour = termTypeBehaviourMapping[termType]()
+    self.log('using new term type')
+
+
+  def crCharReceived(self):
+    self.behaviour.translateReceivedSpecChar(self, '\r')
+
+  def newLineCharReceived(self):
+    self.behaviour.translateReceivedSpecChar(self, '\n')
+
+
+  '''
   def sendString(self, s):
     self.checkSizeAndSendWindowSize()
     print 'sending:',s
     self.inputLog.write(s)
     self.send(s)
-
-
-  def writeCtrlWithKey(self, key):#Key should only be 'A'-'Z'
-    #"CTRL" key pressed with key.
-    sendKey = key-ord('A')+1#'A' will send 1 to server
-    if self.connection.getOptionState(chr(01)).him.state == 'no':
-        #Server will not echo, so we need to echo, it should be ^A etc.
-        self.view.log('will echo')
-        if key>255:
-            self.view.log('out of 256%d'%key)
-        else:
-            self.send('^'+chr(key))
-    self._write(chr(sendKey))
-    return False#tell the window msg hendler do not process the message again
-
   def writeSpecialKey(self, ch):
     self.log('terminalSendCharBase: writing %d'%ch)
     snd = self.behaviour.translateSpecialChar(ch)
@@ -47,28 +65,22 @@ class terminalSendCharBase(vt100Parser):
     else:
       self.send(snd)
       return False
-  
-  
-  def setTermType(self, termType):
-    self.behaviour = termTypeBehaviourMapping[termType]()
-    self.log('using new term type')
-    
-  def crCharReceived(self):
-    self.behaviour.translateReceivedSpecChar(self, '\r')
 
-  def newLineCharReceived(self):
-    self.behaviour.translateReceivedSpecChar(self, '\n')
-    
   def send(self, data):
-    s = self.connection.getOptionState(chr(01))#ECHO?
-    if s.him.state == 'no':
-        #Server will not echo, so we need to echo
-        #cl('our echo state:'+str(s.us.state))
-        print 'server echo state:'+s.him.state
-        self.write(data)
-    #print 'our echo state:'+s.us.state
+    try:
+      s = self.connection.getOptionState(chr(01))#ECHO?
+      if s.him.state == 'no':
+          #Server will not echo, so we need to echo
+          #cl('our echo state:'+str(s.us.state))
+          print 'server echo state:'+s.him.state
+          self.write(data)
+      #print 'our echo state:'+s.us.state
+    except:
+      pass
     self._write(data)
+  '''
   def _write(self, data):
     #print '_writing:',data,ord(data[0])
     #Write data to server through connection
+    self.inputLog.write(data)
     self.connection.sendApplicationData(data)#Connection is set in appTelnetTransport init function

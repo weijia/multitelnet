@@ -4,7 +4,7 @@ import wx
 from wx.lib.anchors import LayoutAnchors
 import wx.stc
 import string
-
+from styledTextCtrlAdapterV3 import *
 
 def create(parent):
     return termWin(parent)
@@ -154,6 +154,7 @@ class termWin(wx.Frame):
         self.adapter = None
         self.session = None
         self.configuration = None
+        self.vwManager = None
 
 
     def OnToolBar1Tools0Tool(self, event):
@@ -163,7 +164,14 @@ class termWin(wx.Frame):
 
     def OnTermWinClose(self, event):
         print '-------------------------closing frame'
-        self.adapter.saveAll()
+        try:
+            self.adapter.saveAll()
+            if self.adapter.connected:
+                self.adapter.connection.loseConnection()
+            if self.vwManager != None:
+                self.vwManager.onViewClose()
+        except:
+            pass
         event.Skip()
     
     def OnTermWinCmdComboText(self, event):
@@ -324,7 +332,7 @@ class termWin(wx.Frame):
         #self.adapter.sendEnter()#Set window size
         self.commonConnect(configuration, session)
 
-
+    '''
     def commonConnect(self, configuration, session):
         from telnetConnector import connectTelnet
         from sshConnector import connectSsh
@@ -348,10 +356,10 @@ class termWin(wx.Frame):
         items.sort()
         backitems=[ [v[1],v[0]] for v in items]
         backitems.sort()
-        '''
-        for j in items:
-            print "key,value:%d,%s"%(j[1], j[0])
-        '''
+        
+        #for j in items:
+        #    print "key,value:%d,%s"%(j[1], j[0])
+
         for v in backitems:
             #print v[1]
             self.termWinCmdCombo.Insert(v[1],0)
@@ -368,7 +376,7 @@ class termWin(wx.Frame):
         from styledTextCtrlAdapterV3 import styledTextAdapter
         self.adapter = styledTextAdapter(self.termWinContent, self.configuration, session)
         self.commonConnect(configuration, session)
-
+    '''
     def OnTermWinCmdComboTextEnter(self, event):
         print 'term ctrl:string enter'
         va = self.termWinCmdCombo.GetValue()
@@ -431,3 +439,67 @@ class termWin(wx.Frame):
     def OnTermWinToolBarOpenlogTool(self, event):
         self.adapter.openLogFile()
         event.Skip()
+    
+    def initCmdHist(self, hist):
+        '''
+        Add commands in history to list box
+        '''
+        items = hist.items()
+        items.sort()
+        #Sort the commands according to the use frequency
+        backitems=[ [v[1],v[0]] for v in items]
+        backitems.sort()
+        '''
+        for j in items:
+            print "key,value:%d,%s"%(j[1], j[0])
+        '''
+        for v in backitems:
+            #print v[1]
+            self.termWinCmdCombo.Insert(v[1],0)
+
+    def initSession(self, config, session, vwManager = None):
+        self.adapter = styledTextAdapter(self.termWinContent, config, session)
+        self.session = session
+        self.configuration = config
+        self.initCmdHist(session['cmdHistState'])
+        self.title(session['sessionName'])
+        self.dataReceived = self.adapter.dataReceived
+        self.write = self.dataReceived
+        self.setTermType = self.adapter.setTermType
+        self.vwManager = vwManager
+        
+    def setConnection(self, connection):
+        self.adapter.connection = connection
+        
+    def getPassword(self):
+        self.getPassDefer = defer.Deferred()
+        #self.getPassFlag = True
+        return self.getPassDefer
+
+    def onDisconnected(self, reason):
+        '''
+        self.connected = False
+        try:
+            reason.printTraceback()
+        except:
+            traceback.print_exc(file=self.appLog)
+            traceback.print_exc(file=sys.stdout)
+        try:
+            self.writeString(reason.getTraceBack(), '#ffffff', '#000000')
+        except:
+            traceback.print_exc(file=self.appLog)
+            traceback.print_exc(file=sys.stdout)
+        try:
+            self.writeString(reason.printTraceback(file=self.appLog), '#ffffff', '#000000')
+        except:
+            traceback.print_exc(file=self.appLog)
+            traceback.print_exc(file=sys.stdout)
+
+        try:
+            self.writeString("client connection lost"+str(reason), '#ffffff', '#000000')
+            self.log("client connection lost"+str(reason))
+        except:
+            traceback.print_exc(file=self.appLog)
+            traceback.print_exc(file=sys.stdout)
+        '''
+        self.title(self.session['sessionName']+"client connection lost" + str(reason))

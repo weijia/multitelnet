@@ -100,7 +100,7 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         self.stringEntered(line)
 
 
-    def write(self, data):#Called by telnet connector
+    def dataReceived(self, data):#Called by telnet connector
         #logging.error('data:')
         #logging.error(data)
         for i in data:
@@ -143,11 +143,11 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
     def stringEntered(self, data):
         print data
         print '----------------------------------'
-        self.sendString(data.encode('utf8'))
+        self.sendData(data.encode('utf8'))
         self.sendEnter()
         
     def sendEnter(self):
-        self.writeSpecialKey(ptKey_cr)
+        self.sendData(chr(ptKey_cr))
         
 #-------------------------------------------------------------------------------
     def setWinSize(self):
@@ -163,22 +163,24 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         
     def checkSizeAndSendWindowSize(self):
         if self.setWinSize():
-            self.connection.sendWindowSize()
+            try:
+                self.connection.sendWindowSize()
+            except:
+                pass
         
 
     
     def saveAll(self):
         self.ansiLog.close()
         self.inputLog.close()
-        print 'new config----------------------------------'
+        #print 'new config----------------------------------'
         if self.playbackFile != None:
             self.playbackFile.close()
         for i in self.configuration['sessions'].keys():
             print i
 
         self.configuration['sessions'][self.session['sessionName']] = self.session
-        if self.connected:
-            self.connection.loseConnection()
+
         
     def rightMouseDown(self, event):
         self.ctrl.GetParent().GetParent().pasteClipboard()
@@ -546,33 +548,7 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         self.ctrl.SetFocus()
     
 
-    def clientConnectionLost(self, reason):
-        '''
-        self.connected = False
-        try:
-            reason.printTraceback()
-        except:
-            traceback.print_exc(file=self.appLog)
-            traceback.print_exc(file=sys.stdout)
-        try:
-            self.writeString(reason.getTraceBack(), '#ffffff', '#000000')
-        except:
-            traceback.print_exc(file=self.appLog)
-            traceback.print_exc(file=sys.stdout)
-        try:
-            self.writeString(reason.printTraceback(file=self.appLog), '#ffffff', '#000000')
-        except:
-            traceback.print_exc(file=self.appLog)
-            traceback.print_exc(file=sys.stdout)
 
-        try:
-            self.writeString("client connection lost"+str(reason), '#ffffff', '#000000')
-            self.log("client connection lost"+str(reason))
-        except:
-            traceback.print_exc(file=self.appLog)
-            traceback.print_exc(file=sys.stdout)
-        '''
-        self.ctrl.frame.title(self.session['sessionName']+"client connection lost" + str(reason))
     def clientConnectionFailed(self, reason):
         self.connected = False
         self.ctrl.frame.title(self.session['sessionName']+"client connection failed" + str(reason))

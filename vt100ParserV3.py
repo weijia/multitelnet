@@ -20,10 +20,11 @@ vt100TermCtrlKeyMapping = {
 }
 '''
 
+class inputAdaptorBase:
+  pass
 
 
-
-class vt100Parser():
+class vt100Parser(inputAdaptorBase):
     def __init__(self):
         self.ansiParser = ansi.AnsiParser(ansi.ColorText.WHITE, ansi.ColorText.BLACK)
         self.ansiParser.writeString = self.writeStringV3

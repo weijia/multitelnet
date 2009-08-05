@@ -44,16 +44,18 @@ def nextLineAndHome(view):
   view.lineDownWithScroll(1)
   view.startOfLine()
 
+def moveHome(view):
+  view.startOfLine()
 
 vt100TermDefaultReceivedKeyMapping = {
   '\n':nextLineAndHome,
-  '\r':nextLineAndHome
+  '\r':moveHome
 }
 
 
 xtermDefaultReceivedKeyMapping = {
   '\n':nextLineAndHome,
-  '\r':nextLineAndHome
+  '\r':moveHome
 }
 
 class vt100DefaultBehaviour:

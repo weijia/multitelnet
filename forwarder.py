@@ -45,7 +45,7 @@ class forwardServer(Protocol):
         if self.acceptedFlag:
           return
         self.acceptedFlag = True
-        self.client = telnetForwardClient(self.view.adapter, self)
+        self.client = telnetForwardClient(self.view, self)
         self.transport = teeTransport(self.transport, viewTransport(self.client))
         self.connector = reactor.connectTCP(self.host, self.port, ForwardClientFactory(self))
         print "Client connected"
