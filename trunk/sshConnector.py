@@ -48,7 +48,7 @@ class appSshTransport():
         self.applicationDataReceived(data)
 
     def applicationDataReceived(self, data):
-        self.view.write(data)
+        self.view.dataReceived(data)
         #print data
     def _write(self, data):
         self.transport.write(data)
@@ -169,7 +169,7 @@ class SSHUserAuthClient(userauth.SSHUserAuthClient):
         self.kept = ''
 
     def getPassword(self):
-        self.view.write('Password:')
+        self.view.dataReceived('Password:')
         self.view.connection = self
         return self.view.getPassword()
     
@@ -209,7 +209,7 @@ class SSHUserAuthClient(userauth.SSHUserAuthClient):
         return True
     
     def sendString(self, text):
-        self.view.write('\r\n')
+        self.view.dataReceived('\r\n')
         self.view.getPassDefer.callback(text)
         print 'entering data:%s'%text
         

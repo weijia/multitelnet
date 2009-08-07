@@ -40,11 +40,11 @@ class playBackFrame(wx.Frame):
     def OnStepButtonButton(self, event):
         self.view.step(int(self.textCtrl1.GetValue()))
         event.Skip()
-
+    
     def OnDebugButton(self, event):
         self.view.switchDebug()
         #event.Skip()
-
+    
 
 class dummyConnection:
     def loseConnection(self):

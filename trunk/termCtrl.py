@@ -305,7 +305,7 @@ class termWin(wx.Frame):
         self.leftMouseDown = True#Do we need this?
         self.termWinContent.cursorUpdated = True
         event.Skip()
-    
+    '''
     def playBackConnect(self, configuration, session):
         self.session = session
         self.configuration = configuration
@@ -332,7 +332,6 @@ class termWin(wx.Frame):
         #self.adapter.sendEnter()#Set window size
         self.commonConnect(configuration, session)
 
-    '''
     def commonConnect(self, configuration, session):
         from telnetConnector import connectTelnet
         from sshConnector import connectSsh
@@ -468,8 +467,7 @@ class termWin(wx.Frame):
         self.setTermType = self.adapter.setTermType
         self.vwManager = vwManager
         
-    def setConnection(self, connection):
-        self.adapter.connection = connection
+
         
     def getPassword(self):
         self.getPassDefer = defer.Deferred()
