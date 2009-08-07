@@ -18,7 +18,7 @@ class multiConsoleManager:
         self.vwMngr = viewManager(self.config)
         self.fwdSvrMngr = forwardServerManager(self.vwMngr, self.config)
         self.clientSvr = clientManager(self.vwMngr, self.config)
-        
+    '''
     def openSessionOriginal(self, session):
         child = termWin(self.toolbox)
         self.childs.append(child)
@@ -26,14 +26,15 @@ class multiConsoleManager:
         #print session['baseDir']
         child.Show()
         return child#return the opened session
-        
-    def openPlayBackSession(self, session):
+
+    def openPlayBackSessionOriginal(self, session):
         child = termWin(self.toolbox)
         self.childs.append(child)
         child.playBackConnect(self.config, session)
         #print session['baseDir']
         child.Show()
         return child#return the opened session
+    '''
     def openTmpSess(self, server, port, triggers = None, timeoutHandler = None):
         #print self.toolbox
         #print 'server:%s,port:%d'%(server,port)
@@ -46,7 +47,12 @@ class multiConsoleManager:
         child = self.clientSvr.createTelnetClient(session)
         self.childs.append(child)
         return child#return the opened session
-
+        
+    def openPlayBackSession(self, session):
+        child = self.clientSvr.createPlaybackClient(session)
+        self.childs.append(child)
+        return child#return the opened session
+        
     def closeAll(self):
         for i in self.childs:
             try:

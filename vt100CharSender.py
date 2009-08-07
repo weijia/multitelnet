@@ -28,7 +28,6 @@ class terminalSendCharBase(vt100Parser):
         #Special key, send translated char
         self._write(c)
 
-
   def sendKeyWithCtrl(self, key):#Key should only be 'A'-'Z'
     #"CTRL" key pressed with key.
     sendKey = key-ord('A')+1#'A' will send 1 to server
@@ -40,7 +39,6 @@ class terminalSendCharBase(vt100Parser):
   def setTermType(self, termType):
     self.behaviour = termTypeBehaviourMapping[termType]()
     self.log('using new term type')
-
 
   def crCharReceived(self):
     self.behaviour.translateReceivedSpecChar(self, '\r')

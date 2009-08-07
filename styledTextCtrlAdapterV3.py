@@ -36,19 +36,10 @@ from logSwitcher import *
 class styledTextAdapter(terminalSendCharBase, logSwitcher):
     def __init__(self, styledTextCtrl, configuration, session):
         terminalSendCharBase.__init__(self)
-        self.ctrl = styledTextCtrl#This is the terminal frame? No, this is the exact styled ctrl
+        logSwitcher.__init__(self, configuration, session)
         self.session = session
         self.configuration = configuration
-        logFileNameFmtString = self.session['ansiLog']
-        import logFilenameGenerator
-        
-        logFileNameString = logFilenameGenerator.logNameGen(logFileNameFmtString, \
-            self.session['server'], str(session["port"]))
-        self.ansiLogFilename = logFileNameString
-        self.ansiLog = file(logFileNameString, 'wb+')
-        self.appLog = file(logFileNameString+'.app.log', 'w')
-        self.inputLog = file(logFileNameString+'.input.log', 'w')
-        #print 'logFileName'+logFileNameString
+        self.ctrl = styledTextCtrl#This is the terminal frame? No, this is the exact styled ctrl
         self.connection  = None #When connecting, appTelnetTransport will set this value to connection
         #connectTelnet(session, self)
         self.x = 0
@@ -82,13 +73,7 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         self.cursorAtLastLine = True
         self.EOL = '\r\n'#Currently the end of line is CRLF for styledTextCtrl
         self.playbackFile = None
-        self.configuration['global']['logDetail'] = False
-        if self.configuration['global']['logDetail']:
-            self.log = self.realLog
-            self.debugFlag = True
-            self.log('debug on')
-        else:
-            self.debugFlag = False
+
         self.getPassFlag = False
 
 
@@ -115,7 +100,7 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         self.log('stylee:char')
         self.checkSizeAndSendWindowSize()
         if self.connection and event.GetKeyCode():
-            self.send(chr(event.GetKeyCode()))
+            self.sendData(chr(event.GetKeyCode()))
             self.log('char event:%d'%event.GetKeyCode())
             
     def keyDown(self, event):
@@ -135,11 +120,15 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
             #We handled the key already using the above function, so do not need
             #further processing. no Skip() call needed.
             return
-
+        if event.GetKeyCode() == wx.WXK_RETURN:
+            self.sendData(chr(event.GetKeyCode()))
+            return
+        '''
         if self.writeSpecialKey(event.GetKeyCode()):
             self.log('connection writeKey:%d\n'%event.GetKeyCode())
             event.Skip()#if the above code return true, then continu process the message
-            
+        '''
+        event.Skip()
     def stringEntered(self, data):
         print data
         print '----------------------------------'
@@ -542,18 +531,10 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         dlg.Destroy()
     def play(self, path):
         self.playbackFile = open(path,'rb')
-    
-    def step(self, num = 10):
-        self.write(self.playbackFile.read(num))
-        self.ctrl.SetFocus()
-    
 
 
     def clientConnectionFailed(self, reason):
         self.connected = False
         self.ctrl.frame.title(self.session['sessionName']+"client connection failed" + str(reason))
 
-    def getPassword(self):
-        self.getPassDefer = defer.Deferred()
-        self.getPassFlag = True
-        return self.getPassDefer
+
