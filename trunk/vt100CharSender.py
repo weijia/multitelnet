@@ -16,9 +16,10 @@ termTypeBehaviourMapping = {'XTERM':xtermBehaviour
 class terminalSendCharBase(vt100Parser):
   def __init__(self, *argv):
     vt100Parser.__init__(self, *argv)
-    self.behaviour = vt100DefaultBehaviour()
+    self.behaviour = xtermBehaviour()
     
   def sendData(self, d):
+    print 'sendData called'
     for i in d:
       c = self.behaviour.translateSpecialChar(i)
       if c == None:
@@ -26,6 +27,13 @@ class terminalSendCharBase(vt100Parser):
         self._write(i)
       else:
         #Special key, send translated char
+        '''
+        if len(c) > 1:
+          o = ord(c[0])
+        else:
+          o = ord(c)
+        print 'sending %d'%o
+        '''
         self._write(c)
 
   def sendKeyWithCtrl(self, key):#Key should only be 'A'-'Z'
@@ -47,38 +55,9 @@ class terminalSendCharBase(vt100Parser):
     self.behaviour.translateReceivedSpecChar(self, '\n')
 
 
-  '''
-  def sendString(self, s):
-    self.checkSizeAndSendWindowSize()
-    print 'sending:',s
-    self.inputLog.write(s)
-    self.send(s)
-  def writeSpecialKey(self, ch):
-    self.log('terminalSendCharBase: writing %d'%ch)
-    snd = self.behaviour.translateSpecialChar(ch)
-    if snd is None:
-      #The char is not processed, return True so it will be further processed.
-      self.log('not special char')
-      return True
-    else:
-      self.send(snd)
-      return False
-
-  def send(self, data):
-    try:
-      s = self.connection.getOptionState(chr(01))#ECHO?
-      if s.him.state == 'no':
-          #Server will not echo, so we need to echo
-          #cl('our echo state:'+str(s.us.state))
-          print 'server echo state:'+s.him.state
-          self.write(data)
-      #print 'our echo state:'+s.us.state
-    except:
-      pass
-    self._write(data)
-  '''
   def _write(self, data):
     #print '_writing:',data,ord(data[0])
     #Write data to server through connection
     self.inputLog.write(data)
+    #print self.connection
     self.connection.sendApplicationData(data)#Connection is set in appTelnetTransport init function

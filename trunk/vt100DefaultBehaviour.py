@@ -16,7 +16,7 @@ should be '\r'+chr(0). What is the real value then?
 '''
 vt100TermDefaultKeyMapping = {
     8: chr(127),#chr(8),#Backspace
-    ptKey_cr: '\n',#'\r\000',#Enter, per protocol, it is the same as return#See vt100CharSender.py
+    chr(ptKey_cr): '\n',#'\r\000',#Enter, per protocol, it is the same as return#See vt100CharSender.py
     10: '\n',
     9: chr(9),#tab
     27: chr(27),#esc
@@ -29,7 +29,7 @@ vt100TermDefaultKeyMapping = {
 
 xtermDefaultKeyMapping = {
     8: chr(127),#chr(8),#Backspace
-    ptKey_cr: '\r\n',#'\r\000',#Enter, per protocol, it is the same as return#See vt100CharSender.py
+    chr(ptKey_cr): '\r\n',#'\r\000',#Enter, per protocol, it is the same as return#See vt100CharSender.py
     10: '\n',
     9: chr(9),#tab
     27: chr(27),#esc

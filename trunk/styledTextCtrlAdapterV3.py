@@ -63,38 +63,29 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         self.scrollTop = 0
         self.scrollBottom = 9999
         #self.setWinSize()
+        '''
         try:
             trig = self.session['triggers']
             self.scriptHandler = triggerHandler(self.sendScriptCmd, self.session)#textProcessor()
         except:
             self.scriptHandler = dummyProcessor()
+        '''
         self.connected = True
         self.cursorAtEnd = True
         self.cursorAtLastLine = True
         self.EOL = '\r\n'#Currently the end of line is CRLF for styledTextCtrl
+        '''
         self.playbackFile = None
-
         self.getPassFlag = False
-
-
+        '''
+    '''
     def openScript(self, path, delay=5, prompt ='>>> '):
         self.scriptHandler.close()
         self.scriptHandler = staticScriptHandler(path, self.sendScriptCmd, delay, prompt)
 
     def sendScriptCmd(self, line):
         self.stringEntered(line)
-
-
-    def dataReceived(self, data):#Called by telnet connector
-        #logging.error('data:')
-        #logging.error(data)
-        for i in data:
-            self.log('a:%d,%c'%(ord(i),i))
-        #self.ansiLog.write('received len%d'%len(data))
-        self.ansiLog.write(data)
-        self.ansiParser.parseString(data)
-        #print data
-
+    '''
 #-------------------------------------------------------------------------------
     def char(self, event):#A char entered.
         self.log('stylee:char')
@@ -114,13 +105,16 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
             return
         #First check if the key is combined with other control key
         if event.ControlDown():
-            self.writeCtrlWithKey(event.GetKeyCode())
+            self.sendKeyWithCtrl(event.GetKeyCode())
             #The above function will always return False. so we wont call skip here
             self.log('ctrlKey pressed with:%d\n'%event.GetKeyCode())
             #We handled the key already using the above function, so do not need
             #further processing. no Skip() call needed.
             return
         if event.GetKeyCode() == wx.WXK_RETURN:
+            self.sendData(chr(event.GetKeyCode()))
+            return
+        if event.GetKeyCode() == wx.WXK_BACK:
             self.sendData(chr(event.GetKeyCode()))
             return
         '''
@@ -156,8 +150,6 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
                 self.connection.sendWindowSize()
             except:
                 pass
-        
-
     
     def saveAll(self):
         self.ansiLog.close()
@@ -165,14 +157,15 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         #print 'new config----------------------------------'
         if self.playbackFile != None:
             self.playbackFile.close()
+        '''
         for i in self.configuration['sessions'].keys():
             print i
-
+        '''
         self.configuration['sessions'][self.session['sessionName']] = self.session
-
         
     def rightMouseDown(self, event):
         self.ctrl.GetParent().GetParent().pasteClipboard()
+
     def getWidth(self):
         return self.width
     def getHeight(self):
@@ -273,8 +266,9 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
             self.replaceACharWithStyle(ch, fg, bg)
         else:
             self.appendACharWithStyle(ch, fg, bg)
-            
+        '''
         self.scriptHandler.write(ch)
+        '''
                 
     def writeString(self, text, fg, bg):
         '''
@@ -298,8 +292,9 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         self.log('str:%s'%text)
         #self.currentCaretPos = self.ctrl.GetEndStyled()
         self.currentCaretPos = self.ctrl.GetCurrentPos()
-        
+        '''
         self.scriptHandler.write(text)
+        '''
 #-------------------------------------------------------------------------------
 
     def eraseFullScreen(self):
@@ -515,7 +510,7 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
         self.currentCaretPos = self.ctrl.GetCurrentPos()
         self.cursorAtEnd = False
 #-------------------------------------------------------------------------------
-
+    '''
     def runScript(self):
         #Select a file
         from scriptSelectDialog import chooseScript
@@ -536,5 +531,5 @@ class styledTextAdapter(terminalSendCharBase, logSwitcher):
     def clientConnectionFailed(self, reason):
         self.connected = False
         self.ctrl.frame.title(self.session['sessionName']+"client connection failed" + str(reason))
-
+    '''
 

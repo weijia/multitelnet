@@ -160,6 +160,14 @@ class appTelnetTransport(TelnetTransport):
 class telnetClient(appTelnetTransport):
   def sendApplicationData (self, data) :
     #Send the data directly
+    s = self.getOptionState(chr(01))#ECHO?
+    if s.him.state == 'no':
+        #Server will not echo, so we need to echo
+        #cl('our echo state:'+str(s.us.state))
+        #print 'server echo state:'+s.him.state
+        self.view.dataReceived(data)
+    #print 'our echo state:'+s.us.state
+
     self._write(data)
 
 class dummyConnection:

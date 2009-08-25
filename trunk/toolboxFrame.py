@@ -3,14 +3,8 @@
 import wx
 import re
 
-logPath = 'd:/'
 
-localSession = {'sessionName':'localhost:2111','server':'localhost','port':2111,'cmdHist':[],
-                'rightMouseDown':"copyToClip",
-                'ansiLogName':'%(server)s_%(port)s_%(time)s_ansi.log',
-                'ansiLog':logPath+'%(server)s_%(port)s_%(time)s_ansi.log',
-                'charLog':logPath+'char.log',
-                'baseDir':'d:/tmp/','cmdHistState':{},'sshFlag':False}
+from sessionManager import *
 
 def create(parent):
     return toolWindow(parent)
@@ -222,25 +216,7 @@ class toolWindow(wx.Frame):
         self.comboBox5.Insert(self.comboBox5.GetValue(), 0)
         #Add strings to configuration
         return session
-    '''
-    def updateSession(self, session):
-        #Update the information in the configuration
-        session['sessionName'] = self.comboBox1.GetValue()
-        import os
-        session['server'] = self.comboBox2.GetValue()
-        session['port'] = int(self.comboBox3.GetValue())
-        session['baseDir'] = self.comboBox5.GetValue()
-        session['ansiLog'] = os.path.join(session['baseDir'],self.comboBox4.GetValue())
-        session['sshFlag'] = self.sshCon.IsChecked()
 
-        #self.comboBox1.Insert(self.comboBox1.GetValue(), 0)
-        self.comboBox2.Insert(self.comboBox2.GetValue(), 0)
-        self.comboBox3.Insert(self.comboBox3.GetValue(), 0)
-        self.comboBox4.Insert(self.comboBox4.GetValue(), 0)
-        self.comboBox5.Insert(self.comboBox5.GetValue(), 0)
-        #Add strings to configuration
-        return session
-    '''
     
     def rightMouseDown(self):
         pass
@@ -258,23 +234,6 @@ class toolWindow(wx.Frame):
         #for i in session['cmdHist']:
         #    print i
 
-    def createTempSession(self, server, port, triggers, timeoutHandler):
-        import copy
-        session = copy.copy(localSession)
-        import uuid
-        session['sessionName'] = server+':'+str(port)+'-'+str(uuid.uuid4())+'-temp-session'
-        import os
-        session['server'] = server
-        session['port'] = port
-        session['triggers'] = triggers
-        session['ansiLog'] = os.path.join(session['baseDir'], session['ansiLogName'])
-        if timeoutHandler != None:
-            print 'handler provided'
-            session['timeoutHandler'] = timeoutHandler
-        self.openLater[session['sessionName']] = session
-        from twisted.internet import reactor
-        reactor.callLater(1, self.openSessionLaterCallback)
-        return session
 
     def OnComboBox1Combobox(self, event):
         self.updateSelection()

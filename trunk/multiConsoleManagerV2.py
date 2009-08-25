@@ -3,6 +3,7 @@ from forwardServerManager import *
 from viewManager import *
 from clientManager import *
 
+from sessionManager import *
 
 class multiConsoleManager:
     def __init__(self, toolboxFrame, config):
@@ -17,39 +18,41 @@ class multiConsoleManager:
         gM = self
         self.vwMngr = viewManager(self.config)
         self.fwdSvrMngr = forwardServerManager(self.vwMngr, self.config)
-        self.clientSvr = clientManager(self.vwMngr, self.config)
-    '''
-    def openSessionOriginal(self, session):
-        child = termWin(self.toolbox)
-        self.childs.append(child)
-        child.connect(self.config, session)
-        #print session['baseDir']
-        child.Show()
-        return child#return the opened session
+        self.clientMngr = clientManager(self.vwMngr, self.config)
 
-    def openPlayBackSessionOriginal(self, session):
-        child = termWin(self.toolbox)
-        self.childs.append(child)
-        child.playBackConnect(self.config, session)
-        #print session['baseDir']
-        child.Show()
-        return child#return the opened session
-    '''
-    def openTmpSess(self, server, port, triggers = None, timeoutHandler = None):
+
+        
+    def createTempSession(self, server, port, triggers, timeoutHandler):
+        import copy
+        session = copy.copy(localSession)
+        import uuid
+        session['sessionName'] = server+':'+str(port)+'-'+str(uuid.uuid4())+'-temp-session'
+        import os
+        session['server'] = server
+        session['port'] = port
+        session['triggers'] = triggers
+        session['ansiLog'] = os.path.join(session['baseDir'], session['ansiLogName'])
+        if timeoutHandler is None:
+            print 'handler provided'
+            session['timeoutHandler'] = timeoutHandler
+        return self.openSession(session)
+    #--------------------------------------------------------------------------------------------------------------------------------------------------------
+    #The following functions can be called outside of this class.
+    def openTmpSession(self, server, port, triggers = None, timeoutHandler = None):
         #print self.toolbox
         #print 'server:%s,port:%d'%(server,port)
-        return self.toolbox.createTempSession(server,port, triggers, timeoutHandler)
-    
+        return self.createTempSession(server,port, triggers, timeoutHandler)
+        
     def openFwdServer(self, session):
         return self.fwdSvrMngr.createForwardServer(session)
 
     def openSession(self, session):
-        child = self.clientSvr.createTelnetClient(session)
+        child = self.clientMngr.createTelnetClient(session)
         self.childs.append(child)
         return child#return the opened session
         
     def openPlayBackSession(self, session):
-        child = self.clientSvr.createPlaybackClient(session)
+        child = self.clientMngr.createPlaybackClient(session)
         self.childs.append(child)
         return child#return the opened session
         
@@ -59,12 +62,12 @@ class multiConsoleManager:
                 i.Close()
             except:
                 pass
-    
+    '''
     def newSession(self):
         self.toolbox.Show()
     def hello(self):
         pass
-
+    '''
 
 
 def getManholeFactory(namespace, **passwords):

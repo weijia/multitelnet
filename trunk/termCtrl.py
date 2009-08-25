@@ -305,77 +305,7 @@ class termWin(wx.Frame):
         self.leftMouseDown = True#Do we need this?
         self.termWinContent.cursorUpdated = True
         event.Skip()
-    '''
-    def playBackConnect(self, configuration, session):
-        self.session = session
-        self.configuration = configuration
-        from styledTextCtrlAdapterV3 import styledTextAdapter
-        self.adapter = styledTextAdapter(self.termWinContent, self.configuration, session)
-        self.adapter.playBack = True
-        import playBackFrame
-        self.playback = playBackFrame.create(self)
-        self.playback.view = self.adapter
-        self.adapter.connection = playBackFrame.dummyConnection()
-        import os
-        dlg = wx.FileDialog(
-            self, message="Choose a file", defaultDir=os.getcwd(),
-            defaultFile="", wildcard="All files (*.*)|*.*",
-            style=wx.OPEN | wx.CHANGE_DIR
-            )
-        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
 
-        self.playback.Show()
-        self.adapter.play(path)
-        self.adapter.height = 25
-        self.adapter.scrollBottom = self.adapter.height-1
-        #self.adapter.sendEnter()#Set window size
-        self.commonConnect(configuration, session)
-
-    def commonConnect(self, configuration, session):
-        from telnetConnector import connectTelnet
-        from sshConnector import connectSsh
-        for i in self.session['cmdHist']:
-            #print 'command history'+i
-            self.termWinCmdCombo.Insert(i, 0)
-            #print i
-            #Move to new setting
-            try:
-                try:
-                    if self.session['cmdHistState'][i] != 0:
-                        #session history statistics exist
-                        pass
-                except KeyError:
-                    self.session['cmdHistState'][i] = 0
-            except KeyError:
-                self.session['cmdHistState'] = dict()
-                self.session['cmdHistState'][i] = 0
-        #Add commands to list box
-        items = self.session['cmdHistState'].items()
-        items.sort()
-        backitems=[ [v[1],v[0]] for v in items]
-        backitems.sort()
-        
-        #for j in items:
-        #    print "key,value:%d,%s"%(j[1], j[0])
-
-        for v in backitems:
-            #print v[1]
-            self.termWinCmdCombo.Insert(v[1],0)
-
-        if self.session['sshFlag']:
-            connectSsh(session, self.adapter)
-        else:
-            connectTelnet(session, self.adapter)
-        self.SetTitle(self.session['sessionName'])
-
-    def connect(self, configuration, session):
-        self.session = session
-        self.configuration = configuration
-        from styledTextCtrlAdapterV3 import styledTextAdapter
-        self.adapter = styledTextAdapter(self.termWinContent, self.configuration, session)
-        self.commonConnect(configuration, session)
-    '''
     def OnTermWinCmdComboTextEnter(self, event):
         print 'term ctrl:string enter'
         va = self.termWinCmdCombo.GetValue()

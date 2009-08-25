@@ -22,21 +22,43 @@ class telnetAppDataParser:
     return self.getPassDefer
   def setTermType(self, termtype):
     pass
+  def addDataHandler(self, handler):
+    self.adapter.addDataHandler(handler)
+  def sendData(self, data):
+    self.adapter.sendData(data)
     
 class delayOutputParser(telnetAppDataParser):
   '''
   Only update terminal data after 0.5 seconds, so function calls will be minimized
   '''
-  def __init__(self, styledTextCtrl, configuration, session):
+  def __init__(self, configuration, session, delayTime = 0.2):
     self.dataList = []
-    telnetAppDataParser.__init__(self, styledTextCtrl, configuration, session)
-
+    self.session = session
+    telnetAppDataParser.__init__(self, configuration, session)
+    from twisted.internet import reactor
+    self.scheduled = reactor.callLater(999999, self.delayedParser)
+    self.delayTime = delayTime
+    
+    #Data log for connection
+    import logFilenameGenerator
+    logFileNameFmtString = self.session['ansiLog']
+    logFileNameString = logFilenameGenerator.logNameGen(logFileNameFmtString, \
+        self.session['server'], str(session["port"]))
+    self.ansiLogFilename = logFileNameString
+    self.ansiLog = file(logFileNameString, 'wb+')
+    
   def dataReceived(self, data):
+    #Write the connection data
+    self.ansiLog.write(data)
+    
+    #Send data to view
     self.dataList.append(data)
     from twisted.internet import reactor
-    reactor.callLater(0.5, self.delayedParser)
+    if self.scheduled.active():
+      self.scheduled.cancel()
+    self.scheduled = reactor.callLater(self.delayTime, self.delayedParser)
 
   def delayedParser(self):
     d = ''.join(self.dataList)
     self.adapter.dataReceived(d)
-    dataList = []
+    self.dataList = []

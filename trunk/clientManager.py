@@ -7,7 +7,7 @@ class clientBase:
   def getOptionState(self, c):
     pass
   def sendApplicationData(self, data):
-    pass
+    print 'clientBase sendApplicationData called'
 
     
 class playbackClient(clientBase):
@@ -40,6 +40,7 @@ class clientManager:
         connectSsh(session, view)
     else:
         connectTelnet(session, view)
+    return view
   '''
   def createTelnetForwardClient(self, view, globalConfig, session):
     view.initSession(session)
@@ -66,11 +67,8 @@ class clientManager:
     playback.view = client
     view.setConnection(playBackFrame.dummyConnection())
 
-
-    
-
     playback.Show()
 
     view.adapter.height = 25
     view.adapter.scrollBottom = self.adapter.height-1
-
+    return view
