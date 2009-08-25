@@ -1,5 +1,6 @@
 from twisted.web import xmlrpc, server
-import mtel
+from sessionManager import *
+import uuid
 
 '''
     dmi = mtel.sess('10.192.168.81',2001)
@@ -22,42 +23,56 @@ import mtel
 
 #Every xml function should return a value.
 class mtelXmlRpcServer(xmlrpc.XMLRPC):
+    def __init__(self):
+      self.sessionMngr = sessionManager()
+      self.sessionList = {}
+      xmlrpc.XMLRPC.__init__(self)
+    
     """An example object to be published."""
-    def getSessionFromUuid(uuid):
-        return mtel.getSessionFromUuid(uuid)
-    def xmlrpc_sess(self, server, port):
+    def getSessionFromUuid(self, u):
+        return self.sessionList[u]
+        
+    def xmlrpc_sess(self):
         """
         Create a connection
         """
-        return str(mtel.sess(server,port).uuid)
-    def xmlrpc_con(self, sess):
+        s = self.sessionMngr.createSession()
+        u = str(uuid.uuid4())
+        self.sessionList[u] = s
+        return u
+        
+    def xmlrpc_con(self, sess, server, port):
         """
         Connect to server
         """
-        mtel.getSessionFromUuid(sess).con()
+        self.sessionList[sess].connectToServer(server, port)
         return 'connecting'
     def xmlrpc_t(self, sess, pattern, command):
         """
         Set a trigger
         """
-        mtel.getSessionFromUuid(sess).t = pattern, command
-    def xmlrpc_tmo(self, action):
-        """
-        Raise a Fault indicating that the procedure should not be used.
-        """
-        getSessionFromUuid(sess).tmo = action
+        #print 'xml t:'
+        self.sessionList[sess].t = pattern, command
         return sess
-    def xmlrpc_c(self, action):
+    def xmlrpc_tmo(self, sess, action):
         """
         Raise a Fault indicating that the procedure should not be used.
         """
-        mtel.getSessionFromUuid(sess).c = action
+        self.sessionList[sess].tmo = action
+        return sess
+    def xmlrpc_c(self, sess, action):
+        """
+        Raise a Fault indicating that the procedure should not be used.
+        """
+        self.sessionList[sess].c = action
         return sess
     def xmlrpc_s(self, sess, action):
         """
         Send command to terminal
         """
-        mtel.getSessionFromUuid(sess).s = action
+        self.sessionList[sess].s = action
         return sess
     def xmlrpc_helloworld(self):
         return 'helloWorld'
+    def xmlrpc_td(self, sess, action):
+        self.sessionList[sess].td = action

@@ -259,6 +259,7 @@ class SSHSession(channel.SSHChannel):
     def eofReceived(self):
         print('got eof')
         import sys
+        self.view.onDisconnected('ssh connection disconnected')
         sys.stdin.close()
 
     def closed(self):

@@ -5,6 +5,6 @@ class viewManager:
     self.views = []
     self.configuration = config
   def createView(self, session):
-    child = telnetAppDataParser(self.configuration, session)
+    child = delayOutputParser(self.configuration, session)
     self.views.append(child)
     return child
