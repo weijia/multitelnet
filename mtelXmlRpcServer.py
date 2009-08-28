@@ -21,6 +21,45 @@ import uuid
 
 '''
 
+import threading
+from communication import *
+'''
+class notifier(threading.Thread):
+  def __init__(self, data, server = 'localhost', port = 9527, authkey = "it's secret"):
+    self.quitFlag = False
+    self.addr = (server, port)
+    self.authkey = authkey
+    self.data = data
+    threading.Thread.__init__(self)
+
+  def run ( self ):
+    print 'running'
+    while not self.quitFlag:
+      send(self.addr, self.data)
+      print 'quit'
+      break
+  def quit(self):
+    self.quitFlag = True
+'''
+class notifier:
+  def __init__(self, data, server = 'localhost', port = 9527, authkey = "it's secret"):
+    self.quitFlag = False
+    self.addr = (server, port)
+    self.authkey = authkey
+    self.data = data
+  def start(self):
+    send(self.addr, self.data)
+    pass
+    
+class callbackForRemote:
+  def __init__(self, server, port):
+    self.server = server
+    self.port = port
+  def call(self, data):
+    n = notifier(data, self.server, self.port)
+    n.start()
+
+
 #Every xml function should return a value.
 class mtelXmlRpcServer(xmlrpc.XMLRPC):
     def __init__(self):
@@ -76,3 +115,37 @@ class mtelXmlRpcServer(xmlrpc.XMLRPC):
         return 'helloWorld'
     def xmlrpc_td(self, sess, action):
         self.sessionList[sess].td = action
+        return sess
+    def xmlrpc_tcd(self, sess, pattern):
+        self.sessionList[sess].callbackTriggerOff(pattern)
+        return sess
+    def xmlrpc_disableAllCallback(self, sess):
+        self.sessionList[sess].disableAllCallback()
+        return sess
+    def xmlrpc_w(self, sess, pattern, server, port):
+        print 'xmlrpc_w: ',sess, pattern, server, port
+        self.sessionList[sess].wait(pattern, callbackForRemote(server, port).call)
+        return sess
+        
+    def xmlrpc_tc(self, sess, pattern, server, port):
+        """
+        Set a trigger
+        """
+        #print 'xml t:'
+        print sess, pattern, server, port
+        self.sessionList[sess].addCallbackTrigger(pattern, callbackForRemote(server, port).call)
+        return sess
+    def xmlrpc_ecp(self, sess):
+        o = self.sessionList[sess].endCapture()
+        #r = ''.join(o)
+        #print r
+        #import xmlrpclib
+        #p = xmlrpclib.Binary(o)
+        k = o.replace(chr(8),'')#xml rpc can not decode char 0x8
+        return k
+        #return sess
+    def xmlrpc_scp(self, sess):
+        self.sessionList[sess].startCapture()
+        return sess
+    def xmlrpc_disconnectRemote(self, sess):
+        self.sessionList[sess].disconnectRemote()

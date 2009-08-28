@@ -107,23 +107,11 @@ class multiConsoleCommandLine(LineReceiver):
         self.sendLine("You said: "+line)
 
 
-from twisted.web import server, resource
-
-class LinksPage(resource.Resource):
-    isLeaf = 1
-
-    def __init__(self, links):
-        resource.Resource.__init__(self)
-        self.links = links
-
-    def render(self, request):
-        return "<ul>" + "".join([
-            "<li><a href='%s'>%s</a></li>" % (link, title)
-            for title, link in self.links.items()]) + "</ul>"
 
 
 from mtelXmlRpcServer import *
 from forwarder import *
+from multiTermSite import *
 
 class startMultiConsoleCommandLineServer:
     def __init__(self, manager):
@@ -140,18 +128,14 @@ class startMultiConsoleCommandLineServer:
         from twisted.internet import reactor
         #from twisted.cred import portal, checkers
         #from twisted.conch import manhole, manhole_ssh
-
+        '''
         links = {'Twisted': 'http://twistedmatrix.com/',
                  'Python': 'http://python.org'}
-        site = server.Site(LinksPage(links))
+        '''
+        #global gM
+        site = server.Site(multiTermResourceRoot(self.manager))
         reactor.listenTCP(TERM_SERVER_PORT, site)
-        '''
-        host = "zch66bld01"
-        port = 22
-        listen_port = 2345
-        server_factory = ForwardServerFactory(host, port)
-        reactor.listenTCP(listen_port, server_factory)
-        '''
+
     def startXmlRpcServer(self):
         from twisted.internet import reactor
         r = mtelXmlRpcServer()
