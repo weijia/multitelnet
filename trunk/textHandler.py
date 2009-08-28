@@ -19,11 +19,15 @@ class delayHandleBase(dataHandler):
     self.scheduled = reactor.callLater(self.delay, self.handle)
   def handle(self):
     pass
-  def handleData(self, text):
-    print 'handle data called in delay handle base', text
-    self.data.append(text)
+  def handleData(self, text):#This function will be called by other class
+    #print 'handle data called in delay handle base', text
+    self.data.append(text)#No text removed
     self.delayHandle()
-
+  def flushData(self):
+    self.handle()
+    
+    
+    
 def complexSplit(s, splitChars):
   result = s.split(splitChars[0])
   tmpResult = []
@@ -37,13 +41,13 @@ def complexSplit(s, splitChars):
 
 
 class textHandlerLineProducer(delayHandleBase):
-  def __init__(self):
+  def __init__(self, delay):
     self.data = []
-    delayHandleBase.__init__(self, 5)
+    delayHandleBase.__init__(self, delay)
 
   def handle(self):
     d = ''.join(self.data)
-    print 'handle called', d
+    #print 'handle called', d
     lines = complexSplit(d, '\r\n')
     partNum = len(lines) - 1
     self.data = [lines[partNum]]
@@ -60,7 +64,7 @@ class textHandlerLineProducer(delayHandleBase):
     self.callingScript = True
     from twisted.internet import reactor
     reactor.callLater(self.callScriptDelay, func)
-      
+  '''
   def delaySendCmd(self, cmd):
     self.cmd = cmd
     self.delayCallFunc(self.sendCmdCallback)
@@ -68,3 +72,4 @@ class textHandlerLineProducer(delayHandleBase):
   def sendCmdCallback(self):
     self.callingScript = False
     self.notifObj(self.cmd)
+  '''

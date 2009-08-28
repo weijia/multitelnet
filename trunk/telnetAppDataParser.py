@@ -62,3 +62,5 @@ class delayOutputParser(telnetAppDataParser):
     d = ''.join(self.dataList)
     self.adapter.dataReceived(d)
     self.dataList = []
+  def flushData(self):
+    self.delayedParser()

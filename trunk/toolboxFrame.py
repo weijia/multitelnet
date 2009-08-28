@@ -2,7 +2,7 @@
 
 import wx
 import re
-
+import copy
 
 from sessionManager import *
 
@@ -208,7 +208,9 @@ class toolWindow(wx.Frame):
         session['baseDir'] = self.comboBox5.GetValue()
         session['ansiLog'] = os.path.join(session['baseDir'],self.comboBox4.GetValue())
         session['sshFlag'] = self.sshCon.IsChecked()
-
+        #Update the self.configuration['sessions']
+        self.configuration['sessions'][session['sessionName']] = session
+        
         #self.comboBox1.Insert(self.comboBox1.GetValue(), 0)
         self.comboBox2.Insert(self.comboBox2.GetValue(), 0)
         self.comboBox3.Insert(self.comboBox3.GetValue(), 0)
@@ -261,15 +263,20 @@ class toolWindow(wx.Frame):
         '''
     def OnToolWindowClose(self, event):
         self.consoleManager.closeAll()
-        output = open(self.configPath, 'wb')
-        #remove all obsoleted session
-        for i in self.configuration['sessions'].keys():
-            if re.compile('-temp-session$').search(i):
-                del self.configuration['sessions'][i]
-        # Pickle dictionary using protocol 0.
-        import cPickle
-        cPickle.dump(self.configuration, output)
-        output.close()
+        try:
+          output = open(self.configPath, 'wb')
+          #remove all obsoleted session
+          for i in self.configuration['sessions'].keys():
+              if re.compile('-temp-session$').search(i):
+                  del self.configuration['sessions'][i]
+          # Pickle dictionary using protocol 0.
+          import cPickle
+          #print 'cPickle.dump'
+          #print self.configuration
+          cPickle.dump(self.configuration, output)
+          output.close()
+        except IOError:
+          pass
         '''
         for i in self.configuration.keys():
             print self.configuration[i]
@@ -306,6 +313,7 @@ class toolWindow(wx.Frame):
         #event.Skip()
 
     def OnDelButtonButton(self, event):
+        #print self.comboBox1.GetValue()
         rmStr = self.comboBox1.GetValue()
         index = self.comboBox1.FindString(rmStr)
         self.comboBox1.Delete(index)
@@ -335,11 +343,15 @@ class toolWindow(wx.Frame):
 
     def OnFwdServerButton(self, event):
         try:
+            #print self.comboBox1.GetValue()
             session = self.configuration['sessions'][self.comboBox1.GetValue()]
         except KeyError:
-            session = localSession
+            session = copy.copy(localSession)
 
+        #print session
+        #print self.configuration['sessions'].keys()
         self.fillInSessionInfo(session)
+        #print session
         port = self.consoleManager.openFwdServer(session)
         import subprocess
         prog = ['C:\\Program Files\\PuTTY\\putty.exe', 'telnet://localhost:%d'%port]
