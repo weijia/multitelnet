@@ -28,26 +28,26 @@ class clientManager:
     self.clients = []
     self.vwManager = vwManager
     self.config = config
-  def createTelnetClient(self, session):
+  def createTelnetClient(self, sess):
     from telnetConnector import connectTelnet
     from sshConnector import connectSsh
-    view = self.vwManager.createView(session)
+    view = self.vwManager.createView(sess)
     #Client will be created when connection to server is made, so the following
     #code should not be put here
     #self.clients.append(telnetClient(view))
     view.setConnection(clientBase())
-    if session['sshFlag']:
-        connectSsh(session, view)
+    if sess.sessCfg['sshFlag']:
+        connectSsh(sess.sessCfg, view)
     else:
-        connectTelnet(session, view)
+        connectTelnet(sess.sessCfg, view)
     return view
   '''
   def createTelnetForwardClient(self, view, globalConfig, session):
     view.initSession(session)
     self.clients.append(telnetForwardClient(view,))
   '''
-  def createPlaybackClient(self, session):
-    view = self.vwManager.createView(session)
+  def createPlaybackClient(self, sess):
+    view = self.vwManager.createView(sess)
     #Client will be created when connection to server is made, so the following
     #code should not be put here
     #self.clients.append(telnetClient(view))

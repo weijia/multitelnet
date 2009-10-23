@@ -5,9 +5,10 @@ import wx
 from twisted.internet import wxreactor
 wxreactor.install()
 
-
-import wxConsoleParentFrame
+from sessionManager import *
+#import wxConsoleParentFrame
 import toolboxFrame
+from multiConsoleManagerV2 import multiConsoleManager
 
 modules ={u'configUtil': [0, '', u'configUtil.py'],
  u'multiconsoleScript': [0, '', u'multiconsoleScript.py'],
@@ -17,12 +18,9 @@ modules ={u'configUtil': [0, '', u'configUtil.py'],
                           'wxPython console Application',
                           u'wxConsoleParentFrame.py']}
 
-from multiConsoleManagerV2 import multiConsoleManager
-global consoleMan
-consoleMan = None
+global sessionMan
+sessionMan = None
 global appStartCallback
-
-
 
 
 def addCallback(func):
@@ -35,11 +33,14 @@ class BoaApp(wx.App):
         self.main = toolboxFrame.create(None)
         self.main.Show()
         #self.consoleWin = wxConsoleParentFrame.create(self.main, self.main.configuration)
-        self.main.consoleManager = multiConsoleManager(self.main, self.main.configuration)
-        global consoleMan
-        consoleMan = self.main.consoleManager
+        self.main.sessionMngr = sessionManager(self.main, self.main.configuration)
+        self.consoleMan = multiConsoleManager(toolboxFrame, self.main.configuration)
+        global gM
+        gM = self
+        global sessionMan
+        sessionMan = self.main.sessionMngr
         self.SetTopWindow(self.main)
-        #print consoleMan
+        #print sessionMan
         global appStartCallback
         #print appStartCallback
         if appStartCallback != None:

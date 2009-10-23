@@ -1,15 +1,20 @@
 from termCtrl import *
 
 class telnetAppDataParser:
-  def __init__(self, configuration, session):
+  def __init__(self, configuration, sess):
     self.terminalWnd = termWin(None)
-    self.terminalWnd.initSession(configuration, session, self)
+    self.terminalWnd.initSession(configuration, sess.sessCfg, self)
     self.terminalWnd.Show()
     self.adapter = self.terminalWnd.adapter
+  def runScript(self, p):
+    self.sess.runScript(p)
+    
+  def getTermWin(self):
+    return terminalWnd
     
   def dataReceived(self, data):#Called by telnet connector
     self.adapter.dataReceived(data)
-    
+
   def onDisconnected(self, reason):
     self.terminalWnd.onDisconnected(reason)
     
@@ -31,19 +36,19 @@ class delayOutputParser(telnetAppDataParser):
   '''
   Only update terminal data after 0.5 seconds, so function calls will be minimized
   '''
-  def __init__(self, configuration, session, delayTime = 0.2):
+  def __init__(self, configuration, sess, delayTime = 0.2):
     self.dataList = []
-    self.session = session
-    telnetAppDataParser.__init__(self, configuration, session)
+    self.sess = sess
+    telnetAppDataParser.__init__(self, configuration, sess)
     from twisted.internet import reactor
     self.scheduled = reactor.callLater(999999, self.delayedParser)
     self.delayTime = delayTime
     
     #Data log for connection
     import logFilenameGenerator
-    logFileNameFmtString = self.session['ansiLog']
+    logFileNameFmtString = self.sess.sessCfg['ansiLog']
     logFileNameString = logFilenameGenerator.logNameGen(logFileNameFmtString, \
-        self.session['server'], str(session["port"]))
+        self.sess.sessCfg['server'], str(self.sess.sessCfg["port"]))
     self.ansiLogFilename = logFileNameString
     self.ansiLog = file(logFileNameString, 'wb+')
     
