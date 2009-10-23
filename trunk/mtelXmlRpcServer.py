@@ -62,69 +62,66 @@ class callbackForRemote:
 
 #Every xml function should return a value.
 class mtelXmlRpcServer(xmlrpc.XMLRPC):
-    def __init__(self):
-      self.sessionMngr = sessionManager()
-      self.sessionList = {}
+    def __init__(self, sessionMngr):
+      self.sessionMngr = sessionMngr
       xmlrpc.XMLRPC.__init__(self)
     
     """An example object to be published."""
     def getSessionFromUuid(self, u):
-        return self.sessionList[u]
-        
+        return self.sessionMngr.sessionList[u]
+
     def xmlrpc_sess(self):
         """
         Create a connection
         """
-        s = self.sessionMngr.createSession()
-        u = str(uuid.uuid4())
-        self.sessionList[u] = s
+        u = self.sessionMngr.createSession()
         return u
         
     def xmlrpc_con(self, sess, server, port):
         """
         Connect to server
         """
-        self.sessionList[sess].connectToServer(server, port)
+        self.sessionMngr.sessionList[sess].connectToServer(server, port)
         return 'connecting'
     def xmlrpc_t(self, sess, pattern, command):
         """
         Set a trigger
         """
         #print 'xml t:'
-        self.sessionList[sess].t = pattern, command
+        self.sessionMngr.sessionList[sess].t = pattern, command
         return sess
     def xmlrpc_tmo(self, sess, action):
         """
         Raise a Fault indicating that the procedure should not be used.
         """
-        self.sessionList[sess].tmo = action
+        self.sessionMngr.sessionList[sess].tmo = action
         return sess
     def xmlrpc_c(self, sess, action):
         """
         Raise a Fault indicating that the procedure should not be used.
         """
-        self.sessionList[sess].c = action
+        self.sessionMngr.sessionList[sess].c = action
         return sess
     def xmlrpc_s(self, sess, action):
         """
         Send command to terminal
         """
-        self.sessionList[sess].s = action
+        self.sessionMngr.sessionList[sess].s = action
         return sess
     def xmlrpc_helloworld(self):
         return 'helloWorld'
     def xmlrpc_td(self, sess, action):
-        self.sessionList[sess].td = action
+        self.sessionMngr.sessionList[sess].td = action
         return sess
     def xmlrpc_tcd(self, sess, pattern):
-        self.sessionList[sess].callbackTriggerOff(pattern)
+        self.sessionMngr.sessionList[sess].callbackTriggerOff(pattern)
         return sess
     def xmlrpc_disableAllCallback(self, sess):
-        self.sessionList[sess].disableAllCallback()
+        self.sessionMngr.sessionList[sess].disableAllCallback()
         return sess
     def xmlrpc_w(self, sess, pattern, server, port):
         print 'xmlrpc_w: ',sess, pattern, server, port
-        self.sessionList[sess].wait(pattern, callbackForRemote(server, port).call)
+        self.sessionMngr.sessionList[sess].wait(pattern, callbackForRemote(server, port).call)
         return sess
         
     def xmlrpc_tc(self, sess, pattern, server, port):
@@ -133,10 +130,10 @@ class mtelXmlRpcServer(xmlrpc.XMLRPC):
         """
         #print 'xml t:'
         print sess, pattern, server, port
-        self.sessionList[sess].addCallbackTrigger(pattern, callbackForRemote(server, port).call)
+        self.sessionMngr.sessionList[sess].addCallbackTrigger(pattern, callbackForRemote(server, port).call)
         return sess
     def xmlrpc_ecp(self, sess):
-        o = self.sessionList[sess].endCapture()
+        o = self.sessionMngr.sessionList[sess].endCapture()
         #r = ''.join(o)
         #print r
         #import xmlrpclib
@@ -145,7 +142,7 @@ class mtelXmlRpcServer(xmlrpc.XMLRPC):
         return k
         #return sess
     def xmlrpc_scp(self, sess):
-        self.sessionList[sess].startCapture()
+        self.sessionMngr.sessionList[sess].startCapture()
         return sess
     def xmlrpc_disconnectRemote(self, sess):
-        self.sessionList[sess].disconnectRemote()
+        self.sessionMngr.sessionList[sess].disconnectRemote()

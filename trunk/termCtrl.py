@@ -159,7 +159,8 @@ class termWin(wx.Frame):
 
     def OnToolBar1Tools0Tool(self, event):
         #Fist button of the toolbar
-        self.adapter.runScript()
+        #self.adapter.runScript()
+        self.vwManager.runScript(self)
         event.Skip()
 
     def OnTermWinClose(self, event):

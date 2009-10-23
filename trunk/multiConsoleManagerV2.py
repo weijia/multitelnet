@@ -1,8 +1,3 @@
-from termCtrl import *
-from forwardServerManager import *
-from viewManager import *
-from clientManager import *
-
 from sessionManager import *
 
 class multiConsoleManager:
@@ -11,63 +6,6 @@ class multiConsoleManager:
         self.config = config
         self.server = startMultiConsoleCommandLineServer(self)
         self.server.startSshShellServer()
-        self.childs = []
-        self.sessionList = {}
-        #self.server.startSimpleServer(1234)
-        global gM
-        gM = self
-        self.vwMngr = viewManager(self.config)
-        self.fwdSvrMngr = forwardServerManager(self.vwMngr, self.config)
-        self.clientMngr = clientManager(self.vwMngr, self.config)
-
-
-        
-    def createTempSession(self, server, port, triggers, timeoutHandler):
-        import copy
-        session = copy.copy(localSession)
-        import uuid
-        session['sessionName'] = server+':'+str(port)+'-'+str(uuid.uuid4())+'-temp-session'
-        import os
-        session['server'] = server
-        session['port'] = port
-        session['triggers'] = triggers
-        session['ansiLog'] = os.path.join(session['baseDir'], session['ansiLogName'])
-        if timeoutHandler is None:
-            print 'handler provided'
-            session['timeoutHandler'] = timeoutHandler
-        return self.openSession(session)
-    #--------------------------------------------------------------------------------------------------------------------------------------------------------
-    #The following functions can be called outside of this class.
-    def openTmpSession(self, server, port, triggers = None, timeoutHandler = None):
-        #print self.toolbox
-        #print 'server:%s,port:%d'%(server,port)
-        return self.createTempSession(server,port, triggers, timeoutHandler)
-        
-    def openFwdServer(self, session):
-        return self.fwdSvrMngr.createForwardServer(session)
-
-    def openSession(self, session):
-        child = self.clientMngr.createTelnetClient(session)
-        self.childs.append(child)
-        return child#return the opened session
-        
-    def openPlayBackSession(self, session):
-        child = self.clientMngr.createPlaybackClient(session)
-        self.childs.append(child)
-        return child#return the opened session
-        
-    def closeAll(self):
-        for i in self.childs:
-            try:
-                i.Close()
-            except:
-                pass
-    '''
-    def newSession(self):
-        self.toolbox.Show()
-    def hello(self):
-        pass
-    '''
 
 
 def getManholeFactory(namespace, **passwords):
@@ -136,10 +74,7 @@ class startMultiConsoleCommandLineServer:
         site = server.Site(multiTermResourceRoot(self.manager))
         reactor.listenTCP(TERM_SERVER_PORT, site)
 
-    def startXmlRpcServer(self):
-        from twisted.internet import reactor
-        r = mtelXmlRpcServer()
-        reactor.listenTCP(8889, server.Site(r))
+
     def startSshShellServer(self):
         #reactor.listenTCP(2222, getManholeFactory(globals(), admin='aaa'))
         from twisted.conch import manhole_tap
@@ -152,11 +87,5 @@ class startMultiConsoleCommandLineServer:
         svc.startService()
         print 'starting http server'
         self.startHttpServer()
-        self.startXmlRpcServer()
-
-
-
-
-
 
 

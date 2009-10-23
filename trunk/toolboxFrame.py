@@ -146,7 +146,7 @@ class toolWindow(wx.Frame):
         self._init_ctrls(parent)
         #self.consoleWin = None
         import os
-        self.consoleManager = None
+        self.sessionMngr = None
         self.currentPath = os.getcwd()
         self.logPath = os.path.join(self.currentPath,'logs')
         self.configPath = os.path.join(os.getcwd(), 'multiConsole.conf')
@@ -181,7 +181,6 @@ class toolWindow(wx.Frame):
             self.comboBox1.SetStringSelection(i)
             #print 'Last selection:%s'%i
             self.updateSelection()
-            self.updateAnsiLogPath()
         #print '------------------------------------'
         from twisted.internet import reactor
         #reactor.callLater(1, self.autoOpenLocalConnection)
@@ -195,7 +194,7 @@ class toolWindow(wx.Frame):
         
     def openSessionLaterCallback(self):
         for i in self.openLater.keys():
-            self.consoleManager.openSession(self.openLater[i])
+            self.sessionMngr.openSession(self.openLater[i])
         self.openLater.clear()
         
     
@@ -224,15 +223,15 @@ class toolWindow(wx.Frame):
         pass
     def connectSession(self):
         try:
-            session = self.configuration['sessions'][self.comboBox1.GetValue()]
+            sess = self.configuration['sessions'][self.comboBox1.GetValue()]
         except KeyError:
-            session = localSession
+            sess = localSession
         #if self.consoleWin != None:
-        #    self.consoleWin.openSession(session)
+        #    self.consoleWin.openSession(sess)
         #self.consoleWin.Show()
         #Update values
-        self.fillInSessionInfo(session)
-        self.consoleManager.openSession(session)
+        self.fillInSessionInfo(sess)
+        self.sessionMngr.openSessionWithCfg(sess)
         #for i in session['cmdHist']:
         #    print i
 
@@ -261,8 +260,9 @@ class toolWindow(wx.Frame):
         for i in session['cmdHist']:
             print i
         '''
+        self.updateAnsiLogPath()
     def OnToolWindowClose(self, event):
-        self.consoleManager.closeAll()
+        self.sessionMngr.closeAll()
         try:
           output = open(self.configPath, 'wb')
           #remove all obsoleted session
@@ -330,7 +330,7 @@ class toolWindow(wx.Frame):
         except KeyError:
             session = localSession
         self.fillInSessionInfo(session)
-        self.consoleManager.openPlayBackSession(session)
+        self.sessionMngr.openPlayBackSession(session)
         event.Skip()
 
     def OnConnectButButton(self, event):
@@ -352,7 +352,7 @@ class toolWindow(wx.Frame):
         #print self.configuration['sessions'].keys()
         self.fillInSessionInfo(session)
         #print session
-        port = self.consoleManager.openFwdServer(session)
+        port = self.sessionMngr.openFwdServer(session)
         import subprocess
         prog = ['C:\\Program Files\\PuTTY\\putty.exe', 'telnet://localhost:%d'%port]
         print prog

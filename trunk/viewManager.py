@@ -2,9 +2,9 @@ from telnetAppDataParser import *
 
 class viewManager:
   def __init__(self, config):
-    self.views = []
+    self.views = {}
     self.configuration = config
-  def createView(self, session):
-    child = delayOutputParser(self.configuration, session)
-    self.views.append(child)
+  def createView(self, sess):
+    child = delayOutputParser(self.configuration, sess)
+    self.views[child] = sess
     return child

@@ -79,7 +79,10 @@ def smL(*args):
     smartProxyLogger.error(logStr)
 
 def whosdaddy():
-    return inspect.stack()[2][3]
+    try:
+      return inspect.stack()[2][3]
+    except:
+      return 'unknown'
 
 def changeEncoding(s):
     if type(s) == unicode:
