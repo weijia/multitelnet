@@ -1,0 +1,1 @@
+Manipulate multiple telnet in 1 application with python script ability. This application used twisted, wxpython. And used BOA constructor as IDE.
